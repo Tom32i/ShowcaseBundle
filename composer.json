@@ -1,7 +1,8 @@
 {
     "name": "tom32i/showcase-bundle",
-    "description": "ShowCase Bundle",
+    "description": "Showcase Bundle",
     "type": "symfony-bundle",
+    "homepage": "https://github.com/Tom32i/ShowcaseBundle",
     "license": "MIT",
     "authors": [
         {
@@ -10,9 +11,21 @@
             "homepage": "https://thomas.jarrand.fr"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "Tom32i\\ShowcaseBundle\\": "/"
+        }
+    },
     "require": {
         "php": "^7.4.0",
         "symfony/finder": "^5.0",
         "league/glide": "^1.5"
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.x-dev"
+        }
     }
 }
