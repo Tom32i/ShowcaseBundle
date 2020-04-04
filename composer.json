@@ -12,7 +12,9 @@
         }
     ],
     "autoload": {
-        "psr-4": { "Tom32i\\ShowcaseBundle\\": "" }
+        "psr-4": {
+            "Tom32i\\ShowcaseBundle\\": ""
+        }
     },
     "require": {
         "php": "^7.4.0",
