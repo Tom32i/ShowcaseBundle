@@ -33,5 +33,10 @@ class Tom32iShowcaseExtension extends Extension
 
         $definition = $container->getDefinition(TwigExtension::class);
         $definition->replaceArgument(1, $config['presets']);
+
+        // Register config as parameters
+        $container->setParameter('tom32i_showcase.path', $config['path']);
+        $container->setParameter('tom32i_showcase.cache', $config['cache']);
+        $container->setParameter('tom32i_showcase.presets', $config['presets']);
     }
 }
