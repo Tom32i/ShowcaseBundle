@@ -25,28 +25,28 @@ class Browser
     /**
      * List directories
      */
-    public function list($sortBy = null, $sortContentBy = null): array
+    public function list($sortBy = null, $sortContentBy = null, $filterBy = null, $filterContentBy = null): array
     {
-        /*if (!file_exists($this->path) || !is_dir($this->path)) {
-            return null;
-        }*/
-
         $groups = [];
         $finder = new Finder();
         $finder->in($this->path)->directories()->sortByModifiedTime();
 
         foreach ($finder as $directory) {
-            $groups[] = $this->readDirectory($directory, $sortContentBy);
+            $groups[] = $this->readDirectory($directory, $sortContentBy, $filterContentBy);
         }
 
         if ($sorter = $this->getSortFunction($sortBy)) {
             usort($groups, $sorter);
         }
 
+        if ($filter = $this->getFilterFunction($filterBy)) {
+            $groups = array_values(array_filter($groups, $filter));
+        }
+
         return $groups;
     }
 
-    public function read(string $path, $sortBy = null): ?array
+    public function read(string $path, $sortBy = null, $filterBy = null): ?array
     {
         $finder = new Finder();
         $directories = iterator_to_array($finder->in($this->path)->name($path)->directories(), false);
@@ -55,7 +55,7 @@ class Browser
             return null;
         }
 
-        return $this->readDirectory($directories[0], $sortBy);
+        return $this->readDirectory($directories[0], $sortBy, $filterBy);
     }
 
     /**
@@ -65,7 +65,7 @@ class Browser
      *
      * @return array
      */
-    private function readDirectory(SplFileInfo $directory, $sortBy = null): array
+    private function readDirectory(SplFileInfo $directory, $sortBy = null, $filterBy = null): array
     {
         $finder = new Finder();
         $finder->in($directory->getPathname())->files();
@@ -74,7 +74,6 @@ class Browser
         $videos = [];
         $config = [];
         $archive = null;
-        //$sort = 'sortByDateAsc';
 
         foreach ($finder as $file) {
             $extention = $file->getExtension();
@@ -96,14 +95,12 @@ class Browser
             }
         }
 
-        /*try {
-            usort($images, [$this, $sort]);
-        } catch (\Exception $exception) {
-            usort($images, [$this, 'sortByDateAsc']);
-        }*/
-
         if ($sorter = $this->getSortFunction($sortBy)) {
             usort($images, $sorter);
+        }
+
+        if ($filter = $this->getFilterFunction($filterBy)) {
+            $images = array_values(array_filter($images, $filter));
         }
 
         return array_merge($config, [
@@ -123,7 +120,6 @@ class Browser
             'path' => sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
             'exif' => $exif,
             'date' => $exif && isset($exif['DateTime']) ? $exif['DateTime'] : $file->getMTime(),
-            //'url' =>
         ];
     }
 
@@ -173,6 +169,32 @@ class Browser
             return $this->getSortFunction([$sortBy => true]);
         }
 
-        throw new \Exception('Unknown sorter');
+        throw new \Exception('Could determine a sorter function');
+    }
+
+    private function getFilterFunction($filter): ?callable
+    {
+        if (!$filter) {
+            return null;
+        }
+
+        if (is_callable($filter)) {
+            return $filter;
+        }
+
+        if (is_array($filter)) {
+            $key = array_keys($filter)[0];
+            $value = array_values($filter)[0];
+
+            return function ($data) use ($key, $value) {
+                return $value == $this->propertyAccessor->getValue($data, $key);
+            };
+        }
+
+        if (is_string($filter)) {
+            return $this->getFilterFunction([$filter => true]);
+        }
+
+        throw new \Exception('Could determine a filter function');
     }
 }
