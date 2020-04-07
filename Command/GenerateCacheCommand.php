@@ -43,7 +43,8 @@ class GenerateCacheCommand extends Command
         $io->title('Generate images cache');
 
         $slug = $input->getArgument('slug');
-        $presets = $input->getArgument('preset') ? [$input->getArgument('preset')] : array_keys($this->presets);
+        $preset = $input->getArgument('preset');
+        $presets = $preset ? [$preset] : array_keys($this->presets);
         $filter = $slug ? (fn($group) => $group['slug'] === $slug) : null;
         $groups = $this->browser->list(null, null, $filter);
 
@@ -52,7 +53,7 @@ class GenerateCacheCommand extends Command
             $io->progressStart(count($group['images']) * count($presets));
 
             foreach ($group['images'] as $image) {
-                foreach ($presets as $key => $config) {
+                foreach ($presets as $key) {
                     $this->processor->warmup($image['path'], $key);
                     $io->progressAdvance();
                 }
