@@ -6,14 +6,14 @@
 
     <services>
         <service id="Tom32i\ShowcaseBundle\Service\Browser">
-            <argument></argument><!-- path -->
+            <argument>%tom32i_showcase.path%</argument>
         </service>
 
         <service id="Tom32i\ShowcaseBundle\Service\Processor">
             <argument type="service" id="Symfony\Component\HttpFoundation\RequestStack"/>
-            <argument></argument><!-- path -->
-            <argument></argument><!-- cachePath -->
-            <argument></argument><!-- presets -->
+            <argument>%tom32i_showcase.path%</argument>
+            <argument>%tom32i_showcase.cache%</argument>
+            <argument>%tom32i_showcase.presets%</argument>
         </service>
 
         <service id="Tom32i\ShowcaseBundle\Controller\MediaController">
@@ -23,8 +23,21 @@
 
         <service id="Tom32i\ShowcaseBundle\Twig\TwigExtension">
             <argument type="service" id="Symfony\Component\Routing\Generator\UrlGeneratorInterface"/>
-            <argument></argument><!-- presets -->
+            <argument>%tom32i_showcase.presets%</argument>
             <tag name="twig.extension"/>
+        </service>
+
+        <service id="Tom32i\ShowcaseBundle\Command\ClearCacheCommand">
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\Browser"/>
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\Processor"/>
+            <tag name="console.command"/>
+        </service>
+
+        <service id="Tom32i\ShowcaseBundle\Command\GenerateCacheCommand">
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\Browser"/>
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\Processor"/>
+            <argument>%tom32i_showcase.presets%</argument>
+            <tag name="console.command"/>
         </service>
     </services>
 </container>

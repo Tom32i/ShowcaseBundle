@@ -23,17 +23,6 @@ class Tom32iShowcaseExtension extends Extension
         $path = preg_replace('#^(.*)/?#', '$1', $config['path']);
         $cache = preg_replace('#^(.*)/?#', '$1', $config['cache']);
 
-        $definition = $container->getDefinition(Browser::class);
-        $definition->replaceArgument(0, $path);
-
-        $definition = $container->getDefinition(Processor::class);
-        $definition->replaceArgument(1, $path);
-        $definition->replaceArgument(2, $cache);
-        $definition->replaceArgument(3, $config['presets']);
-
-        $definition = $container->getDefinition(TwigExtension::class);
-        $definition->replaceArgument(1, $config['presets']);
-
         // Register config as parameters
         $container->setParameter('tom32i_showcase.path', $config['path']);
         $container->setParameter('tom32i_showcase.cache', $config['cache']);

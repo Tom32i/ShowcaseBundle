@@ -35,14 +35,6 @@ class Processor
     }
 
     /**
-     * Clear cache
-     */
-    public function clear(string $filepath)
-    {
-        $this->server->deleteCache($filepath);
-    }
-
-    /**
      * Serve an image with the given preset
      */
     public function serveImage(string $filepath, string $preset): Response
@@ -62,5 +54,21 @@ class Processor
         return new BinaryFileResponse(
             sprintf('%s/%s', $this->path, $filepath)
         );
+    }
+
+    /**
+     * Clear cache
+     */
+    public function clear(string $filepath)
+    {
+        $this->server->deleteCache($filepath);
+    }
+
+    /**
+     * Warmup cache
+     */
+    public function warmup(string $filepath, string $preset)
+    {
+        $this->server->makeImage($filepath, ['p' => $preset]);
     }
 }
