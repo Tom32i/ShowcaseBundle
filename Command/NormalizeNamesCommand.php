@@ -45,7 +45,7 @@ class NormalizeNamesCommand extends Command
         $pattern = $input->getArgument('pattern');
         $slug = $input->getArgument('slug');
         $filter = $slug ? (fn($group) => $group['slug'] === $slug) : null;
-        $groups = $this->browser->list(null, null, $filter);
+        $groups = $this->browser->list(null, ['[slug]' => true], $filter);
 
         foreach ($groups as $group) {
             $io->comment(sprintf('Normalize file names in "%s"...', $group['slug']));
