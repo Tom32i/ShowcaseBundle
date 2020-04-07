@@ -36,39 +36,15 @@ class Processor
 
     /**
      * Clear cache
-     *
-     * @param string $filename
      */
-    public function clear($filename)
+    public function clear(string $filepath)
     {
-        $this->server->deleteCache($filename);
+        $this->server->deleteCache($filepath);
     }
 
     /**
-     * Process file with the given process
-     *
-     * @param string $filename File name
-     * @param string|null $preset Preset name
-     *
-     * @return string Full file path
+     * Serve an image with the given preset
      */
-    public function process(string $filename, string $preset = null): ?string
-    {
-        $path = sprintf('%s/%s', $this->source, $filename);
-        dump($path);
-        if (!file_exists($path)) {
-            return null;
-        }
-
-        if (!$preset) {
-            return $path;
-        }
-
-        $file = $this->server->makeImage($filename, ['p' => $preset]);
-
-        return sprintf('%s/%s', $this->getCacheDirectory(), $file);
-    }
-
     public function serveImage(string $filepath, string $preset): Response
     {
         $this->server->setResponseFactory(
@@ -76,31 +52,15 @@ class Processor
         );
 
         return $this->server->getImageResponse($filepath, ['p' => $preset]);
-
-        /*if (!$filepath) {
-            return new Response('File not found.', Response::HTTP_NOT_FOUND);
-        }
-
-        $response = new BinaryFileResponse(
-            $filepath,
-            200,  // status
-            [
-                'expires' => $days . 'd',
-                'max_age' => $days * 24 * 60 * 60,
-            ],
-            true, // public
-            null, // contentDisposition
-            true, // autoEtag
-            true  // autoLastModified
-        );
-
-        $response->isNotModified($request);
-
-        return $response;*/
     }
 
+    /**
+     * Serve an file
+     */
     public function serveFile(string $filepath): Response
     {
-        return new BinaryFileResponse($filepath);
+        return new BinaryFileResponse(
+            sprintf('%s/%s', $this->path, $filepath)
+        );
     }
 }

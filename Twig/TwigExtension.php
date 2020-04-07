@@ -18,9 +18,8 @@ class TwigExtension extends AbstractExtension
     {
         return [
             new TwigFunction('image', [$this, 'getImage']),
+            new TwigFunction('download', [$this, 'getUrl']),
             new TwigFunction('dimensions', [$this, 'getDimensions']),
-            //new TwigFunction('video', [$this, 'getVideo']),
-            //new TwigFunction('archive', [$this, 'getArchive']),
         ];
     }
 
@@ -29,6 +28,13 @@ class TwigExtension extends AbstractExtension
         return $this->urlGenerator->generate('image', [
             'path' => $path,
             'preset' => $preset,
+        ]);
+    }
+
+    public function getUrl(string $path): string
+    {
+        return $this->urlGenerator->generate('file', [
+            'path' => $path,
         ]);
     }
 

@@ -13,7 +13,7 @@ class MediaController
     }
 
     /**
-     * @Route("/{preset}/{path}", name="image", requirements={"path"=".+"})
+     * @Route("/image/{preset}/{path}", name="image", requirements={"path"=".+"})
      */
     public function image(string $path, string $preset)
     {
@@ -21,7 +21,7 @@ class MediaController
     }
 
     /**
-     * @Route("/{path}", name="file")
+     * @Route("/download/{path}", name="file", requirements={"path"=".+"})
      */
     public function file(string $path)
     {
