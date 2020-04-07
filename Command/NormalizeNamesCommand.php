@@ -16,11 +16,13 @@ class NormalizeNamesCommand extends Command
 
     private Browser $browser;
     private Processor $processor;
+    private string $path;
 
-    public function __construct(Browser $browser, Processor $processor)
+    public function __construct(Browser $browser, Processor $processor, string $path)
     {
         $this->browser = $browser;
         $this->processor = $processor;
+        $this->path = $path;
 
         parent::__construct();
     }
@@ -48,12 +50,16 @@ class NormalizeNamesCommand extends Command
         foreach ($groups as $group) {
             $io->comment(sprintf('Normalize file names in "%s"...', $group['slug']));
             $io->progressStart(count($group['images']));
+            $tmpDir = sys_get_temp_dir();
 
             foreach ($group['images'] as $index => $file) {
-                $this->processor->rename(
-                    $file['path'],
-                    $this->generateName($group, $file, $index, $pattern)
-                );
+                $this->move($file, $tmpDir);
+            }
+
+            foreach ($group['images'] as $index => $file) {
+                $newName = $this->generateName($group, $file, $index, $pattern);
+
+                $this->rename($file, $tmpDir, $newName);
 
                 $io->progressAdvance();
             }
@@ -64,11 +70,38 @@ class NormalizeNamesCommand extends Command
         return 0;
     }
 
+    private function move(array $file, string $tmpDir): bool
+    {
+        return rename(
+            sprintf('%s/%s', $this->path, $file['path']),
+            sprintf('%s/%s', $tmpDir, $file['slug'])
+        );
+    }
+
+    private function rename(array $file, string $tmpDir, string $newName)
+    {
+        $name = \pathinfo($file['path'], PATHINFO_FILENAME);
+        $directory = \pathinfo($file['path'], PATHINFO_DIRNAME);
+        $extension = \pathinfo($file['path'], PATHINFO_EXTENSION);
+        $oldPath = sprintf('%s/%s', $tmpDir, $file['slug']);
+        $newPath = sprintf('%s/%s/%s.%s', $this->path, $directory, $newName, strtolower($extension));
+
+        if (file_exists($newPath)) {
+            throw new Exception(sprintf('Could not rename "%s" to "%s": file already exists.', $oldPath, $newPath));
+        }
+
+        rename($oldPath, $newPath);
+
+        if ($name !== $newName) {
+            $this->processor->clear($file['path']);
+        }
+    }
+
     private function generateName(array $group, array $file, int $index, string $pattern): string
     {
         $newName = $pattern;
         $newName = str_replace('%group%', $group['slug'], $newName);
-        $newName = str_replace('%index%', str_pad($index + 1, 2, '0'), $newName);
+        $newName = str_replace('%index%', str_pad($index + 1, 2, '0', STR_PAD_LEFT), $newName);
 
         return $newName;
     }
