@@ -39,5 +39,11 @@
             <argument>%tom32i_showcase.presets%</argument>
             <tag name="console.command"/>
         </service>
+
+        <service id="Tom32i\ShowcaseBundle\Command\NormalizeNamesCommand">
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\Browser"/>
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\Processor"/>
+            <tag name="console.command"/>
+        </service>
     </services>
 </container>

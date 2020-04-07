@@ -56,6 +56,23 @@ class Processor
         );
     }
 
+    public function rename(string $filepath, string $newName)
+    {
+        $name = \pathinfo($filepath, PATHINFO_FILENAME);
+
+        if ($newName !== $name) {
+            $directory = \pathinfo($filepath, PATHINFO_DIRNAME);
+            $extension = \pathinfo($filepath, PATHINFO_EXTENSION);
+
+            rename(
+                sprintf('%s/%s', $this->path, $filepath),
+                sprintf('%s/%s/%s.%s', $this->path, $directory, $newName, strtolower($extension))
+            );
+
+            $this->server->deleteCache($filepath);
+        }
+    }
+
     /**
      * Clear cache
      */
