@@ -5,6 +5,7 @@ namespace Tom32i\ShowcaseBundle\Command;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Tom32i\ShowcaseBundle\Service\Browser;
@@ -31,8 +32,8 @@ class NormalizeNamesCommand extends Command
     {
         $this
             ->setDescription('Normalize file names')
-            ->addArgument('pattern', InputArgument::OPTIONAL, 'Pattern', '%group%-%index%')
             ->addArgument('slug', InputArgument::OPTIONAL, 'Specific path', null)
+            ->addOption('pattern', 'p', InputOption::VALUE_REQUIRED, 'Pattern', '%group%-%index%')
         ;
     }
 
@@ -42,8 +43,8 @@ class NormalizeNamesCommand extends Command
 
         $io->title('Normalize file names');
 
-        $pattern = $input->getArgument('pattern');
         $slug = $input->getArgument('slug');
+        $pattern = $input->getOption('pattern');
         $filter = $slug ? (fn($group) => $group['slug'] === $slug) : null;
         $groups = $this->browser->list(null, ['[slug]' => true], $filter);
 
