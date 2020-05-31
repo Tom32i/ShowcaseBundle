@@ -34,6 +34,7 @@ class NormalizeNamesCommand extends Command
             ->setDescription('Normalize file names')
             ->addArgument('slug', InputArgument::OPTIONAL, 'Specific path', null)
             ->addOption('pattern', 'p', InputOption::VALUE_REQUIRED, 'Pattern', '%group%-%index%')
+            ->addOption('shuffle', null, InputOption::VALUE_NONE)
         ;
     }
 
@@ -45,13 +46,25 @@ class NormalizeNamesCommand extends Command
 
         $slug = $input->getArgument('slug');
         $pattern = $input->getOption('pattern');
+        $shuffle = $input->getOption('shuffle');
         $filter = $slug ? (fn($group) => $group['slug'] === $slug) : null;
         $groups = $this->browser->list(null, ['[slug]' => true], $filter);
+
+        // Ask for confirmation before shuffling all images:
+        if ($shuffle && \is_null($slug) && !$io->confirm('Are you sure you want to shuffle images in all groups?')) {
+            $io->comment('Aborting.');
+
+            return 0;
+        }
 
         foreach ($groups as $group) {
             $io->comment(sprintf('Normalize file names in "%s"...', $group['slug']));
             $io->progressStart(count($group['images']));
             $tmpDir = sys_get_temp_dir();
+
+            if ($shuffle) {
+                shuffle($group['images']);
+            }
 
             foreach ($group['images'] as $index => $file) {
                 $this->move($file, $tmpDir);
