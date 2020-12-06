@@ -30,8 +30,8 @@ class GenerateCacheCommand extends Command
     protected function configure()
     {
         $this
-            ->setDescription('Clear cache')
-            ->addArgument('preset', InputArgument::OPTIONAL, 'Specific preset  to generate cache for', null)
+            ->setDescription('Delete and regenerate the cached thumbnails for images')
+            ->addArgument('preset', InputArgument::OPTIONAL, 'Specific preset to generate cache for', null)
             ->addArgument('slug', InputArgument::OPTIONAL, 'Specific path to generate cache for', null)
         ;
     }

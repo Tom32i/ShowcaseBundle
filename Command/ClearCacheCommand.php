@@ -28,7 +28,7 @@ class ClearCacheCommand extends Command
     protected function configure()
     {
         $this
-            ->setDescription('Clear cache')
+            ->setDescription('Delete the cached thumbnails for images')
             ->addArgument('slug', InputArgument::OPTIONAL, 'Specific path to clear cache for', null)
         ;
     }
