@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tom32i\ShowcaseBundle\Service;
 
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\PropertyAccess\PropertyAccess;
+use Symfony\Component\PropertyAccess\PropertyAccessor;
 
 /**
  * File Browser
@@ -15,6 +18,8 @@ class Browser
      * Image path
      */
     protected string $path;
+
+    private PropertyAccessor $propertyAccessor;
 
     public function __construct(string $path)
     {
@@ -60,10 +65,6 @@ class Browser
 
     /**
      * Read a directory
-     *
-     * @param string $name
-     *
-     * @return array
      */
     private function readDirectory(SplFileInfo $directory, $sortBy = null, $filterBy = null): array
     {
@@ -145,11 +146,11 @@ class Browser
             return null;
         }
 
-        if (is_callable($sortBy)) {
+        if (\is_callable($sortBy)) {
             return $sortBy;
         }
 
-        if (is_array($sortBy)) {
+        if (\is_array($sortBy)) {
             $key = array_keys($sortBy)[0];
             $asc = (bool) array_values($sortBy)[0];
 
@@ -165,7 +166,7 @@ class Browser
             };
         }
 
-        if (is_string($sortBy)) {
+        if (\is_string($sortBy)) {
             return $this->getSortFunction([$sortBy => true]);
         }
 
@@ -178,11 +179,11 @@ class Browser
             return null;
         }
 
-        if (is_callable($filter)) {
+        if (\is_callable($filter)) {
             return $filter;
         }
 
-        if (is_array($filter)) {
+        if (\is_array($filter)) {
             $key = array_keys($filter)[0];
             $value = array_values($filter)[0];
 
@@ -191,7 +192,7 @@ class Browser
             };
         }
 
-        if (is_string($filter)) {
+        if (\is_string($filter)) {
             return $this->getFilterFunction([$filter => true]);
         }
 

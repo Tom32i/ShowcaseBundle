@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tom32i\ShowcaseBundle\Command;
 
 use Symfony\Component\Console\Command\Command;
@@ -25,7 +27,7 @@ class ClearCacheCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription('Delete the cached thumbnails for images')
@@ -39,12 +41,12 @@ class ClearCacheCommand extends Command
 
         $io->title('Clear cached images');
         $slug = $input->getArgument('slug');
-        $filter = $slug ? (fn($group) => $group['slug'] === $slug) : null;
+        $filter = $slug ? (fn ($group) => $group['slug'] === $slug) : null;
         $groups = $this->browser->list(null, null, $filter);
 
         foreach ($groups as $group) {
             $io->comment(sprintf('Clearing all cached images in "%s"...', $group['slug']));
-            $io->progressStart(count($group['images']));
+            $io->progressStart(\count($group['images']));
 
             foreach ($group['images'] as $image) {
                 $this->processor->clear($image['path']);
