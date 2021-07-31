@@ -28,6 +28,7 @@ class Configuration implements ConfigurationInterface
                             ->scalarNode('h')->end()
                             ->scalarNode('dpr')->end()
                             ->scalarNode('fit')->end()
+                            ->scalarNode('fm')->end()
                         ->end()
                     ->end()
                     ->defaultValue([

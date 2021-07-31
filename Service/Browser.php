@@ -78,7 +78,7 @@ class Browser
         foreach ($finder as $file) {
             $extention = $file->getExtension();
 
-            if (preg_match('#jpg|jpeg|png|gif#i', $extention)) {
+            if (preg_match('#jpg|jpeg|png|gif|webp#i', $extention)) {
                 $images[] = $this->readImage($file, $directory);
             }
 
