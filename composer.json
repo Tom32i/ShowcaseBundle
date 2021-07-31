@@ -19,9 +19,9 @@
     "require": {
         "php": "^7.4.0|^8.0",
         "league/glide": "^2.0",
-        "symfony/finder": "^5.2",
-        "symfony/http-foundation": "^5.2",
-        "league/glide-symfony": "dev-master"
+        "symfony/finder": "^5.3",
+        "symfony/filesystem": "^5.3",
+        "symfony/http-foundation": "^5.3"
     },
     "prefer-stable": true,
     "minimum-stability": "dev",
