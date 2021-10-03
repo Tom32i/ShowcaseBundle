@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tom32i\ShowcaseBundle\Controller;
 
 use Symfony\Component\Routing\Annotation\Route;
@@ -7,6 +9,8 @@ use Tom32i\ShowcaseBundle\Service\Processor;
 
 class MediaController
 {
+    private Processor $processor;
+
     public function __construct(Processor $processor)
     {
         $this->processor = $processor;

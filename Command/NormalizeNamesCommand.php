@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tom32i\ShowcaseBundle\Command;
 
 use Symfony\Component\Console\Command\Command;
@@ -28,7 +30,7 @@ class NormalizeNamesCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription('Normalize file names')
@@ -47,7 +49,7 @@ class NormalizeNamesCommand extends Command
         $slug = $input->getArgument('slug');
         $pattern = $input->getOption('pattern');
         $shuffle = $input->getOption('shuffle');
-        $filter = $slug ? (fn($group) => $group['slug'] === $slug) : null;
+        $filter = $slug ? (fn ($group) => $group['slug'] === $slug) : null;
         $groups = $this->browser->list(null, ['[slug]' => true], $filter);
 
         // Ask for confirmation before shuffling all images:
@@ -59,7 +61,7 @@ class NormalizeNamesCommand extends Command
 
         foreach ($groups as $group) {
             $io->comment(sprintf('Normalize file names in "%s"...', $group['slug']));
-            $io->progressStart(count($group['images']));
+            $io->progressStart(\count($group['images']));
             $tmpDir = sys_get_temp_dir();
 
             if ($shuffle) {
@@ -92,16 +94,16 @@ class NormalizeNamesCommand extends Command
         );
     }
 
-    private function rename(array $file, string $tmpDir, string $newName)
+    private function rename(array $file, string $tmpDir, string $newName): void
     {
-        $name = \pathinfo($file['path'], PATHINFO_FILENAME);
-        $directory = \pathinfo($file['path'], PATHINFO_DIRNAME);
-        $extension = \pathinfo($file['path'], PATHINFO_EXTENSION);
+        $name = pathinfo($file['path'], PATHINFO_FILENAME);
+        $directory = pathinfo($file['path'], PATHINFO_DIRNAME);
+        $extension = pathinfo($file['path'], PATHINFO_EXTENSION);
         $oldPath = sprintf('%s/%s', $tmpDir, $file['slug']);
         $newPath = sprintf('%s/%s/%s.%s', $this->path, $directory, $newName, strtolower($extension));
 
         if (file_exists($newPath)) {
-            throw new Exception(sprintf('Could not rename "%s" to "%s": file already exists.', $oldPath, $newPath));
+            throw new \Exception(sprintf('Could not rename "%s" to "%s": file already exists.', $oldPath, $newPath));
         }
 
         rename($oldPath, $newPath);

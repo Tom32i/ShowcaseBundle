@@ -21,7 +21,13 @@
         "league/glide": "^2.0",
         "symfony/finder": "^5.3",
         "symfony/filesystem": "^5.3",
-        "symfony/http-foundation": "^5.3"
+        "symfony/http-foundation": "^5.3",
+        "twig/twig": "^2.12|^3.0",
+        "symfony/routing": "^5.3",
+        "symfony/http-kernel": "^5.3",
+        "symfony/dependency-injection": "^5.3",
+        "symfony/property-access": "^5.3",
+        "symfony/config": "^5.3"
     },
     "prefer-stable": true,
     "minimum-stability": "dev",
@@ -29,5 +35,12 @@
         "branch-alias": {
             "dev-master": "1.x-dev"
         }
+    },
+    "require-dev": {
+        "ekino/phpstan-banned-code": "^0.5.0",
+        "phpstan/extension-installer": "^1.1",
+        "phpstan/phpstan": "^0.12.94",
+        "phpstan/phpstan-symfony": "^0.12.41",
+        "friendsofphp/php-cs-fixer": "^3.1"
     }
 }

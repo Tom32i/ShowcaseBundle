@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tom32i\ShowcaseBundle\Command;
 
 use Symfony\Component\Console\Command\Command;
@@ -27,7 +29,7 @@ class GenerateCacheCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription('Delete and regenerate the cached thumbnails for images')
@@ -45,12 +47,12 @@ class GenerateCacheCommand extends Command
         $slug = $input->getArgument('slug');
         $preset = $input->getArgument('preset');
         $presets = $preset ? [$preset] : array_keys($this->presets);
-        $filter = $slug ? (fn($group) => $group['slug'] === $slug) : null;
+        $filter = $slug ? (fn ($group) => $group['slug'] === $slug) : null;
         $groups = $this->browser->list(null, null, $filter);
 
         foreach ($groups as $group) {
             $io->comment(sprintf('Generating missing cache images in "%s" for presets: %s.', $group['slug'], implode(', ', $presets)));
-            $io->progressStart(count($group['images']) * count($presets));
+            $io->progressStart(\count($group['images']) * \count($presets));
 
             foreach ($group['images'] as $image) {
                 foreach ($presets as $key) {
