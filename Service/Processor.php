@@ -72,7 +72,16 @@ class Processor
     public function serveFile(string $filepath): Response
     {
         return new BinaryFileResponse(
-            sprintf('%s/%s', $this->path, $filepath)
+            sprintf('%s/%s', $this->path, $filepath),
+            200,  // status
+            [
+                'expires' => '30d',
+                'max_age' => 30 * 24 * 60 * 60,
+            ],
+            true, // public
+            null, // contentDisposition
+            true, // autoEtag
+            true  // autoLastModified
         );
     }
 
