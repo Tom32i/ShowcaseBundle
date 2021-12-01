@@ -48,6 +48,7 @@ security@test: security
 ## Fix coding style
 lint: lint.phpcsfixer lint.phpstan
 
+lint.phpcsfixer: export PHP_CS_FIXER_IGNORE_ENV = true
 lint.phpcsfixer:
 	vendor/bin/php-cs-fixer fix
 
