@@ -8,13 +8,10 @@ use League\Glide\Server;
 use League\Glide\ServerFactory;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 
 class Processor
 {
-    private RequestStack $requestStack;
-
     /** Source directory */
     private string $path;
 
@@ -23,9 +20,8 @@ class Processor
     /** Glide Server */
     private Server $server;
 
-    public function __construct(RequestStack $requestStack, string $path, string $cache, array $presets = [])
+    public function __construct(string $path, string $cache, array $presets = [])
     {
-        $this->requestStack = $requestStack;
         $this->path = $path;
         $this->cache = $cache;
         $this->server = ServerFactory::create([

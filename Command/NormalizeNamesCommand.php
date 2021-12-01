@@ -117,7 +117,7 @@ class NormalizeNamesCommand extends Command
     {
         $newName = $pattern;
         $newName = str_replace('%group%', $group['slug'], $newName);
-        $newName = str_replace('%index%', str_pad($index + 1, 2, '0', STR_PAD_LEFT), $newName);
+        $newName = str_replace('%index%', str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT), $newName);
 
         return $newName;
     }
