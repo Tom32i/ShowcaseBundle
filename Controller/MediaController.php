@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tom32i\ShowcaseBundle\Controller;
 
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Tom32i\ShowcaseBundle\Service\Processor;
 
@@ -27,8 +28,12 @@ class MediaController
     /**
      * @Route("/download/{path}", name="file", requirements={"path"=".+"})
      */
-    public function file(string $path)
+    public function file(Request $request, string $path)
     {
-        return $this->processor->serveFile($path);
+        $response = $this->processor->serveFile($path);
+
+        $response->isNotModified($request);
+
+        return $response;
     }
 }

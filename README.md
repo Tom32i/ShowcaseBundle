@@ -40,4 +40,16 @@ return [
 ];
 ```
 
+### Step 3: import Showcase routes
+
+In `config/routes/annotations.yaml`:
+
+```yaml
+# ...
+
+tom32i_showcase:
+    resource: "@Tom32iShowcaseBundle/Controller/"
+    type: annotation
+```
+
 ## Usage

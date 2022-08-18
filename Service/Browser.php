@@ -83,8 +83,8 @@ class Browser
                 $images[] = $this->readImage($file, $directory);
             }
 
-            if (preg_match('#mov#i', $extention)) {
-                $videos[] = $this->readVideo($file);
+            if (preg_match('#webm|mp4|m4a|m4p|m4b|m4r|m4v|ogg|oga|ogv|ogx|spx|opus#i', $extention)) {
+                $videos[] = $this->readVideo($file, $directory);
             }
 
             if (preg_match('#zip#i', $extention)) {
@@ -93,6 +93,10 @@ class Browser
 
             if (preg_match('#json#i', $extention)) {
                 $config = json_decode($file->getContents(), true);
+
+                if (!\is_array($config)) {
+                    throw new \Exception('Config file ' . $file->getPathname() . ' content must be an array, "' . \gettype($config) . '" given.');
+                }
             }
         }
 
@@ -124,11 +128,12 @@ class Browser
         ];
     }
 
-    public function readVideo(SplFileInfo $file)
+    public function readVideo(SplFileInfo $file, SplFileInfo $directory)
     {
         return [
             'slug' => $file->getBasename(),
-            'path' => $file->getPathname(),
+            'path' => sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
+            'date' => $file->getMTime(),
         ];
     }
 
@@ -137,6 +142,7 @@ class Browser
         return [
             'slug' => $file->getBasename(),
             'path' => $file->getPathname(),
+            'date' => $file->getMTime(),
         ];
     }
 
