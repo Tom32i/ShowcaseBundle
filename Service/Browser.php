@@ -83,7 +83,7 @@ class Browser
                 $images[] = $this->readImage($file, $directory);
             }
 
-            if (preg_match('#mov#i', $extention)) {
+            if (preg_match('#webm|mp4|m4a|m4p|m4b|m4r|m4v|ogg|oga|ogv|ogx|spx|opus#i', $extention)) {
                 $videos[] = $this->readVideo($file, $directory);
             }
 
