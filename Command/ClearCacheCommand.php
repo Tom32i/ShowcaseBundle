@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tom32i\ShowcaseBundle\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -12,10 +13,14 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Tom32i\ShowcaseBundle\Service\Browser;
 use Tom32i\ShowcaseBundle\Service\Processor;
 
+#[AsCommand(
+    name: 'showcase:cache-clear',
+    description: 'Delete the cached thumbnails for images.',
+    hidden: false,
+    aliases: ['showcase:cc']
+)]
 class ClearCacheCommand extends Command
 {
-    protected static $defaultName = 'showcase:cache-clear';
-
     private Browser $browser;
     private Processor $processor;
 
@@ -30,7 +35,6 @@ class ClearCacheCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setDescription('Delete the cached thumbnails for images')
             ->addArgument('slug', InputArgument::OPTIONAL, 'Specific path to clear cache for', null)
         ;
     }

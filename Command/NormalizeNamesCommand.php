@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tom32i\ShowcaseBundle\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -13,10 +14,14 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Tom32i\ShowcaseBundle\Service\Browser;
 use Tom32i\ShowcaseBundle\Service\Processor;
 
+#[AsCommand(
+    name: 'showcase:normalize-names',
+    description: 'Normalize file names.',
+    hidden: false,
+    aliases: ['showcase:cg']
+)]
 class NormalizeNamesCommand extends Command
 {
-    protected static $defaultName = 'showcase:normalize-names';
-
     private Browser $browser;
     private Processor $processor;
     private string $path;
@@ -33,7 +38,6 @@ class NormalizeNamesCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setDescription('Normalize file names')
             ->addArgument('slug', InputArgument::OPTIONAL, 'Specific path', null)
             ->addOption('pattern', 'p', InputOption::VALUE_REQUIRED, 'Pattern', '%group%-%index%')
             ->addOption('shuffle', null, InputOption::VALUE_NONE)
