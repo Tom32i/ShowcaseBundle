@@ -19,7 +19,7 @@ class TwigExtension extends AbstractExtension
         $this->presets = $presets;
     }
 
-    public function getFunctions()
+    public function getFunctions(): array
     {
         return [
             new TwigFunction('image', [$this, 'getImage']),
