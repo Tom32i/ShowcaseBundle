@@ -88,7 +88,7 @@ class Browser
             }
 
             if (preg_match('#zip#i', $extention)) {
-                $archive = $this->readArchive($file);
+                $archive = $this->readArchive($file, $directory);
             }
 
             if (preg_match('#json#i', $extention)) {
@@ -137,11 +137,11 @@ class Browser
         ];
     }
 
-    public function readArchive(SplFileInfo $file)
+    public function readArchive(SplFileInfo $file, SplFileInfo $directory)
     {
         return [
             'slug' => $file->getBasename(),
-            'path' => $file->getPathname(),
+            'path' => sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
             'date' => $file->getMTime(),
         ];
     }
