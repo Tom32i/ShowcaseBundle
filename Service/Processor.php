@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tom32i\ShowcaseBundle\Service;
 
+use League\Glide\Responses\SymfonyResponseFactory;
 use League\Glide\Server;
 use League\Glide\ServerFactory;
 use Symfony\Component\Finder\Finder;
@@ -15,19 +16,17 @@ class Processor
     /** Source directory */
     private string $path;
 
-    private string $cache;
-
     /** Glide Server */
     private Server $server;
 
     public function __construct(string $path, string $cache, array $presets = [])
     {
         $this->path = $path;
-        $this->cache = $cache;
         $this->server = ServerFactory::create([
             'source' => $path,
             'cache' => $cache,
             'presets' => $presets,
+            'response' => new SymfonyResponseFactory(),
         ]);
     }
 
@@ -36,34 +35,10 @@ class Processor
      */
     public function serveImage(string $filepath, string $preset): Response
     {
-        $cachePath = $this->server->makeImage(
+        return $this->server->getImageResponse(
             $this->getFilePath($filepath),
             ['p' => $preset]
         );
-
-        return new BinaryFileResponse(
-            sprintf('%s/%s', $this->cache, $cachePath)
-        );
-    }
-
-    private function getFilePath(string $filepath): string
-    {
-        $finder = new Finder();
-        $data = pathinfo($filepath);
-
-        $finder->in(sprintf('%s/%s', $this->path, $data['dirname']))
-            ->files()
-            ->name($data['filename'] . '.*');
-
-        foreach ($finder as $file) {
-            if ($data['extension'] !== $file->getExtension()) {
-                $filepath = preg_replace(sprintf('#%s$#', $data['extension']), $file->getExtension(), $filepath);
-            }
-
-            return $filepath;
-        }
-
-        throw new \Exception('File not found.');
     }
 
     /**
@@ -99,5 +74,25 @@ class Processor
     public function warmup(string $filepath, string $preset): void
     {
         $this->server->makeImage($filepath, ['p' => $preset]);
+    }
+
+    private function getFilePath(string $filepath): string
+    {
+        $finder = new Finder();
+        $data = pathinfo($filepath);
+
+        $finder->in(sprintf('%s/%s', $this->path, $data['dirname']))
+            ->files()
+            ->name($data['filename'] . '.*');
+
+        foreach ($finder as $file) {
+            if ($data['extension'] !== $file->getExtension()) {
+                $filepath = preg_replace(sprintf('#%s$#', $data['extension']), $file->getExtension(), $filepath);
+            }
+
+            return $filepath;
+        }
+
+        throw new \Exception('File not found.');
     }
 }
