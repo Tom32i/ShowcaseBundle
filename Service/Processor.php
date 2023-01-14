@@ -4,37 +4,25 @@ declare(strict_types=1);
 
 namespace Tom32i\ShowcaseBundle\Service;
 
-use League\Glide\Responses\SymfonyResponseFactory;
 use League\Glide\Server;
-use League\Glide\ServerFactory;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Processor
 {
-    /** Source directory */
-    private string $path;
-
-    /** Glide Server */
-    private Server $server;
-
-    public function __construct(string $path, string $cache, array $presets = [])
-    {
-        $this->path = $path;
-        $this->server = ServerFactory::create([
-            'source' => $path,
-            'cache' => $cache,
-            'presets' => $presets,
-            'response' => new SymfonyResponseFactory(),
-        ]);
+    public function __construct(
+        private Server $server,
+        private string $path,
+    ) {
     }
 
     /**
      * Serve an image with the given preset
      */
-    public function serveImage(string $filepath, string $preset): Response
+    public function serveImage(string $filepath, string $preset): StreamedResponse
     {
+        /* @phpstan-ignore-next-line */
         return $this->server->getImageResponse(
             $this->getFilePath($filepath),
             ['p' => $preset]
@@ -44,7 +32,7 @@ class Processor
     /**
      * Serve an file
      */
-    public function serveFile(string $filepath): Response
+    public function serveFile(string $filepath): BinaryFileResponse
     {
         return new BinaryFileResponse(
             sprintf('%s/%s', $this->path, $filepath),
@@ -78,16 +66,29 @@ class Processor
 
     private function getFilePath(string $filepath): string
     {
-        $finder = new Finder();
         $data = pathinfo($filepath);
 
-        $finder->in(sprintf('%s/%s', $this->path, $data['dirname']))
+        if (!\array_key_exists('dirname', $data)) {
+            throw new \Exception("Could not resolve directory name on \"$this->path\".");
+        }
+
+        if (!\array_key_exists('extension', $data)) {
+            throw new \Exception("Could not resolve file extension on \"$this->path\".");
+        }
+
+        $finder = (new Finder())
+            ->in(sprintf('%s/%s', $this->path, $data['dirname']))
             ->files()
             ->name($data['filename'] . '.*');
 
         foreach ($finder as $file) {
             if ($data['extension'] !== $file->getExtension()) {
-                $filepath = preg_replace(sprintf('#%s$#', $data['extension']), $file->getExtension(), $filepath);
+                /* @phpstan-ignore-next-line */
+                return preg_replace(
+                    sprintf('#%s$#', $data['extension']),
+                    $file->getExtension(),
+                    $filepath
+                );
             }
 
             return $filepath;

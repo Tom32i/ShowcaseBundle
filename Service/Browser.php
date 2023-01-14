@@ -6,32 +6,34 @@ namespace Tom32i\ShowcaseBundle\Service;
 
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
-use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
+use Tom32i\ShowcaseBundle\Model\Archive;
+use Tom32i\ShowcaseBundle\Model\Group;
+use Tom32i\ShowcaseBundle\Model\Image;
+use Tom32i\ShowcaseBundle\Model\Video;
 
 /**
  * File Browser
  */
 class Browser
 {
-    /**
-     * Image path
-     */
-    protected string $path;
-
-    private PropertyAccessor $propertyAccessor;
-
-    public function __construct(string $path)
-    {
-        $this->path = $path;
-        $this->propertyAccessor = PropertyAccess::createPropertyAccessor();
+    public function __construct(
+        private PropertyAccessor $propertyAccessor,
+        private string $path
+    ) {
     }
 
     /**
-     * List directories
+     * List all directories
+     *
+     * @return Group[]
      */
-    public function list($sortBy = null, $sortContentBy = null, $filterBy = null, $filterContentBy = null): array
-    {
+    public function list(
+        mixed $sortBy = null,
+        mixed $sortContentBy = null,
+        mixed $filterBy = null,
+        mixed $filterContentBy = null
+    ): array {
         $groups = [];
         $finder = new Finder();
         $finder->in($this->path)->directories()->sortByModifiedTime();
@@ -40,34 +42,40 @@ class Browser
             $groups[] = $this->readDirectory($directory, $sortContentBy, $filterContentBy);
         }
 
-        if ($sorter = $this->getSortFunction($sortBy)) {
+        if (($sorter = $this->getSortFunction($sortBy)) !== null) {
             usort($groups, $sorter);
         }
 
-        if ($filter = $this->getFilterFunction($filterBy)) {
+        if (($filter = $this->getFilterFunction($filterBy)) !== null) {
             $groups = array_values(array_filter($groups, $filter));
         }
 
         return $groups;
     }
 
-    public function read(string $path, $sortBy = null, $filterBy = null): ?array
-    {
+    /**
+     * Read a single directory
+     */
+    public function read(
+        string $path,
+        mixed $sortBy = null,
+        mixed $filterBy = null
+    ): ?Group {
         $finder = new Finder();
         $directories = iterator_to_array($finder->in($this->path)->name($path)->directories(), false);
 
-        if (empty($directories)) {
+        if (\count($directories) === 0) {
             return null;
         }
 
         return $this->readDirectory($directories[0], $sortBy, $filterBy);
     }
 
-    /**
-     * Read a directory
-     */
-    private function readDirectory(SplFileInfo $directory, $sortBy = null, $filterBy = null): array
-    {
+    private function readDirectory(
+        SplFileInfo $directory,
+        mixed $sortBy = null,
+        mixed $filterBy = null
+    ): Group {
         $finder = new Finder();
         $finder->in($directory->getPathname())->files();
 
@@ -79,19 +87,19 @@ class Browser
         foreach ($finder as $file) {
             $extention = $file->getExtension();
 
-            if (preg_match('#jpg|jpeg|png|gif|webp#i', $extention)) {
+            if (preg_match('#jpg|jpeg|png|gif|webp#i', $extention) === 1) {
                 $images[] = $this->readImage($file, $directory);
             }
 
-            if (preg_match('#webm|mp4|m4a|m4p|m4b|m4r|m4v|ogg|oga|ogv|ogx|spx|opus#i', $extention)) {
+            if (preg_match('#webm|mp4|m4a|m4p|m4b|m4r|m4v|ogg|oga|ogv|ogx|spx|opus#i', $extention) === 1) {
                 $videos[] = $this->readVideo($file, $directory);
             }
 
-            if (preg_match('#zip#i', $extention)) {
+            if (preg_match('#zip#i', $extention) === 1) {
                 $archive = $this->readArchive($file, $directory);
             }
 
-            if (preg_match('#json#i', $extention)) {
+            if (preg_match('#json#i', $extention) === 1) {
                 $config = json_decode($file->getContents(), true);
 
                 if (!\is_array($config)) {
@@ -100,55 +108,60 @@ class Browser
             }
         }
 
-        if ($sorter = $this->getSortFunction($sortBy)) {
+        if (($sorter = $this->getSortFunction($sortBy)) !== null) {
             usort($images, $sorter);
         }
 
-        if ($filter = $this->getFilterFunction($filterBy)) {
+        if (($filter = $this->getFilterFunction($filterBy)) !== null) {
             $images = array_values(array_filter($images, $filter));
         }
 
-        return array_merge($config, [
-            'slug' => $directory->getBasename(),
-            'images' => $images,
-            'videos' => $videos,
-            'archive' => $archive,
-        ]);
+        return new Group(
+            $directory->getBasename(),
+            $images,
+            $videos,
+            $archive,
+            $config
+        );
     }
 
-    public function readImage(SplFileInfo $file, SplFileInfo $directory)
+    public function readImage(SplFileInfo $file, SplFileInfo $directory): Image
     {
-        $exif = @exif_read_data($file->getPathname());
+        try {
+            $exif = exif_read_data($file->getPathname());
+        } catch (\ErrorException) {
+            $exif = false;
+        }
 
-        return [
-            'slug' => $file->getBasename(),
-            'path' => sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
-            'exif' => $exif,
-            'date' => $exif && isset($exif['DateTime']) ? $exif['DateTime'] : $file->getMTime(),
-        ];
+        return new Image(
+            $file->getBasename(),
+            sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
+            isset($exif['DateTime']) ? new \DateTimeImmutable($exif['DateTime']) : (new \DateTimeImmutable())->setTimestamp($file->getMTime()),
+            $exif !== false ? $exif : [],
+        );
     }
 
-    public function readVideo(SplFileInfo $file, SplFileInfo $directory)
+    public function readVideo(SplFileInfo $file, SplFileInfo $directory): Video
     {
-        return [
-            'slug' => $file->getBasename(),
-            'path' => sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
-            'date' => $file->getMTime(),
-        ];
+        return new Video(
+            $file->getBasename(),
+            sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
+            (new \DateTimeImmutable())->setTimestamp($file->getMTime()),
+        );
     }
 
-    public function readArchive(SplFileInfo $file, SplFileInfo $directory)
+    public function readArchive(SplFileInfo $file, SplFileInfo $directory): Archive
     {
-        return [
-            'slug' => $file->getBasename(),
-            'path' => sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
-            'date' => $file->getMTime(),
-        ];
+        return new Archive(
+            $file->getBasename(),
+            sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
+            (new \DateTimeImmutable())->setTimestamp($file->getMTime())
+        );
     }
 
-    private function getSortFunction($sortBy): ?callable
+    private function getSortFunction(mixed $sortBy = null): ?callable
     {
-        if (!$sortBy) {
+        if ($sortBy === null) {
             return null;
         }
 
@@ -176,12 +189,12 @@ class Browser
             return $this->getSortFunction([$sortBy => true]);
         }
 
-        throw new \Exception('Could determine a sorter function');
+        throw new \Exception('Could not determine a sorter function');
     }
 
-    private function getFilterFunction($filter): ?callable
+    private function getFilterFunction(mixed $filter = null): ?callable
     {
-        if (!$filter) {
+        if ($filter === null) {
             return null;
         }
 
@@ -202,6 +215,6 @@ class Browser
             return $this->getFilterFunction([$filter => true]);
         }
 
-        throw new \Exception('Could determine a filter function');
+        throw new \Exception('Could not determine a filter function');
     }
 }

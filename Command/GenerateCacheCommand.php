@@ -11,6 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Tom32i\ShowcaseBundle\Service\Browser;
+use Tom32i\ShowcaseBundle\Service\PresetManager;
 use Tom32i\ShowcaseBundle\Service\Processor;
 
 #[AsCommand(
@@ -21,16 +22,13 @@ use Tom32i\ShowcaseBundle\Service\Processor;
 )]
 class GenerateCacheCommand extends Command
 {
-    private Browser $browser;
-    private Processor $processor;
-    private array $presets;
+    use Behaviour\CommandHelper;
 
-    public function __construct(Browser $browser, Processor $processor, array $presets)
-    {
-        $this->browser = $browser;
-        $this->processor = $processor;
-        $this->presets = $presets;
-
+    public function __construct(
+        private Browser $browser,
+        private Processor $processor,
+        private PresetManager $presetManager
+    ) {
         parent::__construct();
     }
 
@@ -48,19 +46,30 @@ class GenerateCacheCommand extends Command
 
         $io->title('Generate images cache');
 
-        $slug = $input->getArgument('slug');
-        $preset = $input->getArgument('preset');
-        $presets = $preset ? [$preset] : array_keys($this->presets);
-        $filter = $slug ? (fn ($group) => $group['slug'] === $slug) : null;
-        $groups = $this->browser->list(null, null, $filter);
+        $slug = $this->parseString($input->getArgument('slug'));
+        $preset = $this->parseString($input->getArgument('preset'));
+        $presets = $preset !== null ? [$preset] : array_keys($this->presetManager->getAll());
+        $groups = $this->browser->list(null, null, $this->filterBySlug($slug));
+
+        if (\count($groups) === 0) {
+            if ($slug !== null) {
+                $io->info(sprintf('No directory found for slug "%s".', $slug));
+            } else {
+                $io->info('No directory found.');
+            }
+        }
 
         foreach ($groups as $group) {
-            $io->comment(sprintf('Generating missing cache images in "%s" for presets: %s.', $group['slug'], implode(', ', $presets)));
-            $io->progressStart(\count($group['images']) * \count($presets));
+            $io->comment(sprintf(
+                'Generating missing cache images in "%s" for presets: %s.',
+                $group->getSlug(),
+                implode(', ', $presets)
+            ));
+            $io->progressStart(\count($group->getImages()) * \count($presets));
 
-            foreach ($group['images'] as $image) {
+            foreach ($group->getImages() as $image) {
                 foreach ($presets as $key) {
-                    $this->processor->warmup($image['path'], $key);
+                    $this->processor->warmup($image->getPath(), $key);
                     $io->progressAdvance();
                 }
             }
@@ -68,6 +77,6 @@ class GenerateCacheCommand extends Command
             $io->progressFinish();
         }
 
-        return 0;
+        return Command::SUCCESS;
     }
 }

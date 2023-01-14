@@ -5,18 +5,16 @@ declare(strict_types=1);
 namespace Tom32i\ShowcaseBundle\Twig;
 
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Tom32i\ShowcaseBundle\Service\PresetManager;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
 class TwigExtension extends AbstractExtension
 {
-    private UrlGeneratorInterface $urlGenerator;
-    private array $presets;
-
-    public function __construct(UrlGeneratorInterface $urlGenerator, array $presets = [])
-    {
-        $this->urlGenerator = $urlGenerator;
-        $this->presets = $presets;
+    public function __construct(
+        private UrlGeneratorInterface $urlGenerator,
+        private PresetManager $presetManager
+    ) {
     }
 
     public function getFunctions(): array
@@ -28,14 +26,22 @@ class TwigExtension extends AbstractExtension
         ];
     }
 
-    public function getImage(string $path, string $name = null): string
+    public function getImage(string $path, string $name): string
     {
-        $preset = $this->getPreset($name);
+        $preset = $this->presetManager->getPreset($name);
         $data = pathinfo($path);
 
+        if (!\array_key_exists('dirname', $data)) {
+            throw new \Exception("Could not resolve directory name on \"$path\".");
+        }
+
+        if (!\array_key_exists('extension', $data)) {
+            throw new \Exception("Could not resolve file extension on \"$path\".");
+        }
+
         return $this->urlGenerator->generate('image', [
-            'preset' => $name,
-            'path' => sprintf('%s/%s.%s', $data['dirname'], $data['filename'], $preset['fm'] ?? $data['extension']),
+            'preset' => $preset->getName(),
+            'path' => sprintf('%s/%s.%s', $data['dirname'], $data['filename'], $preset->getFormat() ?? $data['extension']),
         ]);
     }
 
@@ -46,22 +52,16 @@ class TwigExtension extends AbstractExtension
         ]);
     }
 
+    /**
+     * @return array<string,?int>
+     */
     public function getDimensions(string $name): array
     {
-        $preset = $this->getPreset($name);
+        $preset = $this->presetManager->getPreset($name);
 
         return [
-            'width' => $preset['w'] ?: null,
-            'height' => $preset['h'] ?: null,
+            'width' => $preset->getWidth() ?? null,
+            'height' => $preset->getHeight() ?? null,
         ];
-    }
-
-    private function getPreset(string $preset): array
-    {
-        if (!isset($this->presets[$preset])) {
-            throw new \Exception("Preset unknown preset \"$preset\".");
-        }
-
-        return $this->presets[$preset];
     }
 }

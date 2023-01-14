@@ -5,13 +5,31 @@
         https://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        <service id="Tom32i\ShowcaseBundle\Glide\GlideServerFactory">
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\PresetManager"/>
+            <argument>%tom32i_showcase.path%</argument>
+            <argument>%tom32i_showcase.cache%</argument>
+        </service>
+
+        <service id="configured_glide_server" class="League\Glide\Server">
+            <factory service="Tom32i\ShowcaseBundle\Glide\GlideServerFactory"/>
+        </service>
+
+        <service id="Symfony\Component\PropertyAccess\PropertyAccessor">
+            <factory class="Symfony\Component\PropertyAccess\PropertyAccess" method="createPropertyAccessor"/>
+        </service>
+
         <service id="Tom32i\ShowcaseBundle\Service\Browser">
+            <argument type="service" id="Symfony\Component\PropertyAccess\PropertyAccessor"/>
             <argument>%tom32i_showcase.path%</argument>
         </service>
 
         <service id="Tom32i\ShowcaseBundle\Service\Processor">
+            <argument type="service" id="configured_glide_server"/>
             <argument>%tom32i_showcase.path%</argument>
-            <argument>%tom32i_showcase.cache%</argument>
+        </service>
+
+        <service id="Tom32i\ShowcaseBundle\Service\PresetManager">
             <argument>%tom32i_showcase.presets%</argument>
         </service>
 
@@ -22,7 +40,7 @@
 
         <service id="Tom32i\ShowcaseBundle\Twig\TwigExtension">
             <argument type="service" id="Symfony\Component\Routing\Generator\UrlGeneratorInterface"/>
-            <argument>%tom32i_showcase.presets%</argument>
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\PresetManager"/>
             <tag name="twig.extension"/>
         </service>
 
@@ -35,7 +53,7 @@
         <service id="Tom32i\ShowcaseBundle\Command\GenerateCacheCommand">
             <argument type="service" id="Tom32i\ShowcaseBundle\Service\Browser"/>
             <argument type="service" id="Tom32i\ShowcaseBundle\Service\Processor"/>
-            <argument>%tom32i_showcase.presets%</argument>
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\PresetManager"/>
             <tag name="console.command"/>
         </service>
 
