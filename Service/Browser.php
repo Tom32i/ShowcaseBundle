@@ -7,6 +7,10 @@ namespace Tom32i\ShowcaseBundle\Service;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
+use Tom32i\ShowcaseBundle\Model\Archive;
+use Tom32i\ShowcaseBundle\Model\Group;
+use Tom32i\ShowcaseBundle\Model\Image;
+use Tom32i\ShowcaseBundle\Model\Video;
 
 /**
  * File Browser
@@ -22,7 +26,7 @@ class Browser
     /**
      * List all directories
      *
-     * @return array<int, array<string, mixed>>
+     * @return Group[]
      */
     public function list(
         mixed $sortBy = null,
@@ -51,14 +55,12 @@ class Browser
 
     /**
      * Read a single directory
-     *
-     * @return array<string, mixed>
      */
     public function read(
         string $path,
         mixed $sortBy = null,
         mixed $filterBy = null
-    ): ?array {
+    ): ?Group {
         $finder = new Finder();
         $directories = iterator_to_array($finder->in($this->path)->name($path)->directories(), false);
 
@@ -69,14 +71,11 @@ class Browser
         return $this->readDirectory($directories[0], $sortBy, $filterBy);
     }
 
-    /**
-     * @return array<string, string>
-     */
     private function readDirectory(
         SplFileInfo $directory,
         mixed $sortBy = null,
         mixed $filterBy = null
-    ): array {
+    ): Group {
         $finder = new Finder();
         $finder->in($directory->getPathname())->files();
 
@@ -117,55 +116,47 @@ class Browser
             $images = array_values(array_filter($images, $filter));
         }
 
-        return array_merge($config, [
-            'slug' => $directory->getBasename(),
-            'images' => $images,
-            'videos' => $videos,
-            'archive' => $archive,
-        ]);
+        return new Group(
+            $directory->getBasename(),
+            $images,
+            $videos,
+            $archive,
+            $config
+        );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function readImage(SplFileInfo $file, SplFileInfo $directory)
+    public function readImage(SplFileInfo $file, SplFileInfo $directory): Image
     {
         try {
             $exif = exif_read_data($file->getPathname());
         } catch (\ErrorException) {
-            $exif = [];
+            $exif = false;
         }
 
-        return [
-            'slug' => $file->getBasename(),
-            'path' => sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
-            'exif' => $exif,
-            'date' => $exif['DateTime'] ?? $file->getMTime(),
-        ];
+        return new Image(
+            $file->getBasename(),
+            sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
+            isset($exif['DateTime']) ? new \DateTimeImmutable($exif['DateTime']) : (new \DateTimeImmutable())->setTimestamp($file->getMTime()),
+            $exif !== false ? $exif : [],
+        );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function readVideo(SplFileInfo $file, SplFileInfo $directory)
+    public function readVideo(SplFileInfo $file, SplFileInfo $directory): Video
     {
-        return [
-            'slug' => $file->getBasename(),
-            'path' => sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
-            'date' => $file->getMTime(),
-        ];
+        return new Video(
+            $file->getBasename(),
+            sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
+            (new \DateTimeImmutable())->setTimestamp($file->getMTime()),
+        );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function readArchive(SplFileInfo $file, SplFileInfo $directory): array
+    public function readArchive(SplFileInfo $file, SplFileInfo $directory): Archive
     {
-        return [
-            'slug' => $file->getBasename(),
-            'path' => sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
-            'date' => $file->getMTime(),
-        ];
+        return new Archive(
+            $file->getBasename(),
+            sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
+            (new \DateTimeImmutable())->setTimestamp($file->getMTime())
+        );
     }
 
     private function getSortFunction(mixed $sortBy = null): ?callable

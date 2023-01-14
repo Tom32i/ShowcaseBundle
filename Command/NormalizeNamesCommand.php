@@ -11,6 +11,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Tom32i\ShowcaseBundle\Model\File;
+use Tom32i\ShowcaseBundle\Model\Group;
 use Tom32i\ShowcaseBundle\Service\Browser;
 use Tom32i\ShowcaseBundle\Service\Processor;
 
@@ -36,7 +38,8 @@ class NormalizeNamesCommand extends Command
     {
         $this
             ->addArgument('slug', InputArgument::OPTIONAL, 'Specific path', null)
-            ->addOption('pattern', 'p', InputOption::VALUE_REQUIRED, 'Pattern', '%group%-%index%')
+            ->addOption('sort', 's', InputOption::VALUE_REQUIRED, 'Sort by', null)
+            ->addOption('pattern', 'p', InputOption::VALUE_REQUIRED, 'Pattern', null)
             ->addOption('shuffle', null, InputOption::VALUE_NONE)
         ;
     }
@@ -48,10 +51,10 @@ class NormalizeNamesCommand extends Command
         $io->title('Normalize file names');
 
         $slug = $this->parseString($input->getArgument('slug'));
-        $pattern = $this->parseString($input->getOption('pattern'));
+        $pattern = $this->parseString($input->getOption('pattern')) ?? '%group%-%index%';
+        $sortBy = $this->parseString($input->getOption('sort')) ?? 'slug';
         $shuffle = (bool) $input->getOption('shuffle');
-        $filter = $slug !== null ? (fn (array $group): bool => $group['slug'] === $slug) : null;
-        $groups = $this->browser->list(null, ['[slug]' => true], $filter);
+        $groups = $this->browser->list(null, [sprintf('[%s]', $sortBy) => true], $this->filterBySlug($slug));
 
         // Ask for confirmation before shuffling all images:
         if ($shuffle && \is_null($slug) && $io->confirm('Are you sure you want to shuffle images in all directories?') === false) {
@@ -60,20 +63,29 @@ class NormalizeNamesCommand extends Command
             return Command::SUCCESS;
         }
 
+        if (\count($groups) === 0) {
+            if ($slug !== null) {
+                $io->info(sprintf('No directory found for slug "%s".', $slug));
+            } else {
+                $io->info('No directory found.');
+            }
+        }
+
         foreach ($groups as $group) {
-            $io->comment(sprintf('Normalize file names in "%s"...', $group['slug']));
-            $io->progressStart(\count($group['images']));
+            $io->comment(sprintf('Normalize file names in "%s"...', $group->getSlug()));
+            $io->progressStart(\count($group->getImages()));
             $tmpDir = sys_get_temp_dir();
+            $images = $group->getImages();
 
             if ($shuffle) {
-                shuffle($group['images']);
+                shuffle($images);
             }
 
-            foreach ($group['images'] as $index => $file) {
+            foreach ($images as $index => $file) {
                 $this->move($file, $tmpDir);
             }
 
-            foreach ($group['images'] as $index => $file) {
+            foreach ($images as $index => $file) {
                 $newName = $this->generateName($group, $index, $pattern);
 
                 $this->rename($file, $tmpDir, $newName);
@@ -87,20 +99,20 @@ class NormalizeNamesCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function move(array $file, string $tmpDir): bool
+    private function move(File $file, string $tmpDir): bool
     {
         return rename(
-            sprintf('%s/%s', $this->path, $file['path']),
-            sprintf('%s/%s', $tmpDir, $file['slug'])
+            sprintf('%s/%s', $this->path, $file->getPath()),
+            sprintf('%s/%s', $tmpDir, $file->getSlug())
         );
     }
 
-    private function rename(array $file, string $tmpDir, string $newName): void
+    private function rename(File $file, string $tmpDir, string $newName): void
     {
-        $name = pathinfo($file['path'], PATHINFO_FILENAME);
-        $group = pathinfo($file['path'], PATHINFO_DIRNAME);
-        $extension = pathinfo($file['path'], PATHINFO_EXTENSION);
-        $oldPath = sprintf('%s/%s', $tmpDir, $file['slug']);
+        $name = pathinfo($file->getPath(), PATHINFO_FILENAME);
+        $group = pathinfo($file->getPath(), PATHINFO_DIRNAME);
+        $extension = pathinfo($file->getPath(), PATHINFO_EXTENSION);
+        $oldPath = sprintf('%s/%s', $tmpDir, $file->getSlug());
         $newPath = sprintf('%s/%s/%s.%s', $this->path, $group, $newName, strtolower($extension));
 
         if (file_exists($newPath)) {
@@ -110,14 +122,14 @@ class NormalizeNamesCommand extends Command
         rename($oldPath, $newPath);
 
         if ($name !== $newName) {
-            $this->processor->clear($file['path']);
+            $this->processor->clear($file->getPath());
         }
     }
 
-    private function generateName(array $group, int $index, string $pattern): string
+    private function generateName(Group $group, int $index, string $pattern): string
     {
         $newName = $pattern;
-        $newName = str_replace('%group%', $group['slug'], $newName);
+        $newName = str_replace('%group%', $group->getSlug(), $newName);
         $newName = str_replace('%index%', str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT), $newName);
 
         return $newName;

@@ -48,17 +48,28 @@ class GenerateCacheCommand extends Command
 
         $slug = $this->parseString($input->getArgument('slug'));
         $preset = $this->parseString($input->getArgument('preset'));
-        $presets = $preset !== null ? [$preset] : array_keys($this->presets);
-        $filter = $slug !== null ? (static fn (array $group): bool => $group['slug'] === $slug) : null;
-        $groups = $this->browser->list(null, null, $filter);
+        $presets = $preset !== null ? [$preset] : array_keys($this->presetManager->getAll());
+        $groups = $this->browser->list(null, null, $this->filterBySlug($slug));
+
+        if (\count($groups) === 0) {
+            if ($slug !== null) {
+                $io->info(sprintf('No directory found for slug "%s".', $slug));
+            } else {
+                $io->info('No directory found.');
+            }
+        }
 
         foreach ($groups as $group) {
-            $io->comment(sprintf('Generating missing cache images in "%s" for presets: %s.', $group['slug'], implode(', ', $presets)));
-            $io->progressStart(\count($group['images']) * \count($presets));
+            $io->comment(sprintf(
+                'Generating missing cache images in "%s" for presets: %s.',
+                $group->getSlug(),
+                implode(', ', $presets)
+            ));
+            $io->progressStart(\count($group->getImages()) * \count($presets));
 
-            foreach ($group['images'] as $image) {
+            foreach ($group->getImages() as $image) {
                 foreach ($presets as $key) {
-                    $this->processor->warmup($image['path'], $key);
+                    $this->processor->warmup($image->getPath(), $key);
                     $io->progressAdvance();
                 }
             }

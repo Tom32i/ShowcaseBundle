@@ -43,15 +43,25 @@ class ClearCacheCommand extends Command
 
         $io->title('Clear cached images');
         $slug = $this->parseString($input->getArgument('slug'));
-        $filter = $slug !== null ? (static fn (array $group): bool => $group['slug'] === $slug) : null;
-        $groups = $this->browser->list(null, null, $filter);
+        $groups = $this->browser->list(null, null, $this->filterBySlug($slug));
+
+        if (\count($groups) === 0) {
+            if ($slug !== null) {
+                $io->info(sprintf('No directory found for slug "%s".', $slug));
+            } else {
+                $io->info('No directory found.');
+            }
+        }
 
         foreach ($groups as $group) {
-            $io->comment(sprintf('Clearing all cached images in "%s"...', $group['slug']));
-            $io->progressStart(\count($group['images']));
+            $io->comment(sprintf(
+                'Clearing all cached images in "%s"...',
+                $group->getSlug()
+            ));
+            $io->progressStart(\count($group->getImages()));
 
-            foreach ($group['images'] as $image) {
-                $this->processor->clear($image['path']);
+            foreach ($group->getImages() as $image) {
+                $this->processor->clear($image->getPath());
                 $io->progressAdvance();
             }
 
