@@ -6,9 +6,13 @@ namespace Tom32i\ShowcaseBundle\Command\Behaviour;
 
 trait CommandHelper
 {
-    private function parseString(?string $source): ?string
+    private function parseString(mixed $source): ?string
     {
-        $value = trim($source);
+        if ($source === null) {
+            return null;
+        }
+
+        $value = trim(\strval($source));
 
         if (\strlen($value) === 0) {
             return null;

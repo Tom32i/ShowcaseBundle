@@ -50,11 +50,11 @@ class NormalizeNamesCommand extends Command
         $slug = $this->parseString($input->getArgument('slug'));
         $pattern = $this->parseString($input->getOption('pattern'));
         $shuffle = (bool) $input->getOption('shuffle');
-        $filter = $slug !== null ? (fn ($group) => $group['slug'] === $slug) : null;
+        $filter = $slug !== null ? (fn (array $group): bool => $group['slug'] === $slug) : null;
         $groups = $this->browser->list(null, ['[slug]' => true], $filter);
 
         // Ask for confirmation before shuffling all images:
-        if ($shuffle && \is_null($slug) && $io->confirm('Are you sure you want to shuffle images in all groups?') === false) {
+        if ($shuffle && \is_null($slug) && $io->confirm('Are you sure you want to shuffle images in all directories?') === false) {
             $io->comment('Aborting.');
 
             return Command::SUCCESS;
@@ -74,7 +74,7 @@ class NormalizeNamesCommand extends Command
             }
 
             foreach ($group['images'] as $index => $file) {
-                $newName = $this->generateName($group, $file, $index, $pattern);
+                $newName = $this->generateName($group, $index, $pattern);
 
                 $this->rename($file, $tmpDir, $newName);
 
@@ -98,10 +98,10 @@ class NormalizeNamesCommand extends Command
     private function rename(array $file, string $tmpDir, string $newName): void
     {
         $name = pathinfo($file['path'], PATHINFO_FILENAME);
-        $directory = pathinfo($file['path'], PATHINFO_DIRNAME);
+        $group = pathinfo($file['path'], PATHINFO_DIRNAME);
         $extension = pathinfo($file['path'], PATHINFO_EXTENSION);
         $oldPath = sprintf('%s/%s', $tmpDir, $file['slug']);
-        $newPath = sprintf('%s/%s/%s.%s', $this->path, $directory, $newName, strtolower($extension));
+        $newPath = sprintf('%s/%s/%s.%s', $this->path, $group, $newName, strtolower($extension));
 
         if (file_exists($newPath)) {
             throw new \Exception(sprintf('Could not rename "%s" to "%s": file already exists.', $oldPath, $newPath));
@@ -114,7 +114,7 @@ class NormalizeNamesCommand extends Command
         }
     }
 
-    private function generateName(array $group, array $file, int $index, string $pattern): string
+    private function generateName(array $group, int $index, string $pattern): string
     {
         $newName = $pattern;
         $newName = str_replace('%group%', $group['slug'], $newName);

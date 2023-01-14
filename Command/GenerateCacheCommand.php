@@ -11,6 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Tom32i\ShowcaseBundle\Service\Browser;
+use Tom32i\ShowcaseBundle\Service\PresetManager;
 use Tom32i\ShowcaseBundle\Service\Processor;
 
 #[AsCommand(
@@ -26,7 +27,7 @@ class GenerateCacheCommand extends Command
     public function __construct(
         private Browser $browser,
         private Processor $processor,
-        private array $presets
+        private PresetManager $presetManager
     ) {
         parent::__construct();
     }
