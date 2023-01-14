@@ -10,24 +10,18 @@ use Tom32i\ShowcaseBundle\Service\Processor;
 
 class MediaController
 {
-    private Processor $processor;
-
-    public function __construct(Processor $processor)
-    {
-        $this->processor = $processor;
+    public function __construct(
+        private Processor $processor
+    ) {
     }
 
-    /**
-     * @Route("/image/{preset}/{path}", name="image", requirements={"path"=".+"})
-     */
+    #[Route('/image/{preset}/{path}', name: 'image')]
     public function image(string $path, string $preset)
     {
         return $this->processor->serveImage($path, $preset);
     }
 
-    /**
-     * @Route("/download/{path}", name="file", requirements={"path"=".+"})
-     */
+    #[Route('/download/{path}', name: 'file')]
     public function file(Request $request, string $path)
     {
         $response = $this->processor->serveFile($path);

@@ -40,11 +40,11 @@ class Browser
             $groups[] = $this->readDirectory($directory, $sortContentBy, $filterContentBy);
         }
 
-        if ($sorter = $this->getSortFunction($sortBy)) {
+        if (($sorter = $this->getSortFunction($sortBy)) !== null) {
             usort($groups, $sorter);
         }
 
-        if ($filter = $this->getFilterFunction($filterBy)) {
+        if (($filter = $this->getFilterFunction($filterBy)) !== null) {
             $groups = array_values(array_filter($groups, $filter));
         }
 
@@ -56,7 +56,7 @@ class Browser
         $finder = new Finder();
         $directories = iterator_to_array($finder->in($this->path)->name($path)->directories(), false);
 
-        if (empty($directories)) {
+        if (\count($directories) === 0) {
             return null;
         }
 
@@ -100,11 +100,11 @@ class Browser
             }
         }
 
-        if ($sorter = $this->getSortFunction($sortBy)) {
+        if (($sorter = $this->getSortFunction($sortBy)) !== null) {
             usort($images, $sorter);
         }
 
-        if ($filter = $this->getFilterFunction($filterBy)) {
+        if (($filter = $this->getFilterFunction($filterBy)) !== null) {
             $images = array_values(array_filter($images, $filter));
         }
 

@@ -21,16 +21,13 @@ use Tom32i\ShowcaseBundle\Service\Processor;
 )]
 class GenerateCacheCommand extends Command
 {
-    private Browser $browser;
-    private Processor $processor;
-    private array $presets;
+    use Behaviour\CommandHelper;
 
-    public function __construct(Browser $browser, Processor $processor, array $presets)
-    {
-        $this->browser = $browser;
-        $this->processor = $processor;
-        $this->presets = $presets;
-
+    public function __construct(
+        private Browser $browser,
+        private Processor $processor,
+        private array $presets
+    ) {
         parent::__construct();
     }
 
@@ -48,10 +45,10 @@ class GenerateCacheCommand extends Command
 
         $io->title('Generate images cache');
 
-        $slug = $input->getArgument('slug');
-        $preset = $input->getArgument('preset');
-        $presets = $preset ? [$preset] : array_keys($this->presets);
-        $filter = $slug ? (fn ($group) => $group['slug'] === $slug) : null;
+        $slug = $this->parseString($input->getArgument('slug'));
+        $preset = $this->parseString($input->getArgument('preset'));
+        $presets = $preset !== null ? [$preset] : array_keys($this->presets);
+        $filter = $slug !== null ? (static fn (array $group): bool => $group['slug'] === $slug) : null;
         $groups = $this->browser->list(null, null, $filter);
 
         foreach ($groups as $group) {
@@ -68,6 +65,6 @@ class GenerateCacheCommand extends Command
             $io->progressFinish();
         }
 
-        return 0;
+        return Command::SUCCESS;
     }
 }

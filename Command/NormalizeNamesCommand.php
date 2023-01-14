@@ -22,16 +22,13 @@ use Tom32i\ShowcaseBundle\Service\Processor;
 )]
 class NormalizeNamesCommand extends Command
 {
-    private Browser $browser;
-    private Processor $processor;
-    private string $path;
+    use Behaviour\CommandHelper;
 
-    public function __construct(Browser $browser, Processor $processor, string $path)
+    public function __construct(
+        private Browser $browser,
+        private Processor $processor,
+        private string $path)
     {
-        $this->browser = $browser;
-        $this->processor = $processor;
-        $this->path = $path;
-
         parent::__construct();
     }
 
@@ -50,17 +47,17 @@ class NormalizeNamesCommand extends Command
 
         $io->title('Normalize file names');
 
-        $slug = $input->getArgument('slug');
-        $pattern = $input->getOption('pattern');
-        $shuffle = $input->getOption('shuffle');
-        $filter = $slug ? (fn ($group) => $group['slug'] === $slug) : null;
+        $slug = $this->parseString($input->getArgument('slug'));
+        $pattern = $this->parseString($input->getOption('pattern'));
+        $shuffle = (bool) $input->getOption('shuffle');
+        $filter = $slug !== null ? (fn ($group) => $group['slug'] === $slug) : null;
         $groups = $this->browser->list(null, ['[slug]' => true], $filter);
 
         // Ask for confirmation before shuffling all images:
-        if ($shuffle && \is_null($slug) && !$io->confirm('Are you sure you want to shuffle images in all groups?')) {
+        if ($shuffle && \is_null($slug) && $io->confirm('Are you sure you want to shuffle images in all groups?') === false) {
             $io->comment('Aborting.');
 
-            return 0;
+            return Command::SUCCESS;
         }
 
         foreach ($groups as $group) {
@@ -87,7 +84,7 @@ class NormalizeNamesCommand extends Command
             $io->progressFinish();
         }
 
-        return 0;
+        return Command::SUCCESS;
     }
 
     private function move(array $file, string $tmpDir): bool

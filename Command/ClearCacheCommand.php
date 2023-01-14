@@ -21,14 +21,12 @@ use Tom32i\ShowcaseBundle\Service\Processor;
 )]
 class ClearCacheCommand extends Command
 {
-    private Browser $browser;
-    private Processor $processor;
+    use Behaviour\CommandHelper;
 
-    public function __construct(Browser $browser, Processor $processor)
-    {
-        $this->browser = $browser;
-        $this->processor = $processor;
-
+    public function __construct(
+        private Browser $browser,
+        private Processor $processor
+    ) {
         parent::__construct();
     }
 
@@ -44,8 +42,8 @@ class ClearCacheCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         $io->title('Clear cached images');
-        $slug = $input->getArgument('slug');
-        $filter = $slug ? (fn ($group) => $group['slug'] === $slug) : null;
+        $slug = $this->parseString($input->getArgument('slug'));
+        $filter = $slug !== null ? (static fn (array $group): bool => $group['slug'] === $slug) : null;
         $groups = $this->browser->list(null, null, $filter);
 
         foreach ($groups as $group) {
@@ -60,6 +58,6 @@ class ClearCacheCommand extends Command
             $io->progressFinish();
         }
 
-        return 0;
+        return Command::SUCCESS;
     }
 }

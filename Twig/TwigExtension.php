@@ -10,13 +10,10 @@ use Twig\TwigFunction;
 
 class TwigExtension extends AbstractExtension
 {
-    private UrlGeneratorInterface $urlGenerator;
-    private array $presets;
-
-    public function __construct(UrlGeneratorInterface $urlGenerator, array $presets = [])
-    {
-        $this->urlGenerator = $urlGenerator;
-        $this->presets = $presets;
+    public function __construct(
+        private UrlGeneratorInterface $urlGenerator,
+        private array $presets = []
+    ) {
     }
 
     public function getFunctions(): array
@@ -51,8 +48,8 @@ class TwigExtension extends AbstractExtension
         $preset = $this->getPreset($name);
 
         return [
-            'width' => $preset['w'] ?: null,
-            'height' => $preset['h'] ?: null,
+            'width' => $preset['w'] ?? null,
+            'height' => $preset['h'] ?? null,
         ];
     }
 
