@@ -128,7 +128,7 @@ class Browser
     public function readImage(SplFileInfo $file, SplFileInfo $directory): Image
     {
         try {
-            $exif = exif_read_data($file->getPathname());
+            $exif = @exif_read_data($file->getPathname());
         } catch (\ErrorException) {
             $exif = false;
         }
