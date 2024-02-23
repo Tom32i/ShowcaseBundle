@@ -22,7 +22,6 @@ class Processor
      */
     public function serveImage(string $filepath, string $preset): StreamedResponse
     {
-        /* @phpstan-ignore-next-line */
         return $this->server->getImageResponse(
             $this->getFilePath($filepath),
             ['p' => $preset]
