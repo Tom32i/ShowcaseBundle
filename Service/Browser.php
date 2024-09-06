@@ -7,6 +7,7 @@ namespace Tom32i\ShowcaseBundle\Service;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
+use Tom32i\ShowcaseBundle\Behavior\Properties;
 use Tom32i\ShowcaseBundle\Model\Archive;
 use Tom32i\ShowcaseBundle\Model\Group;
 use Tom32i\ShowcaseBundle\Model\Image;
@@ -14,32 +15,43 @@ use Tom32i\ShowcaseBundle\Model\Video;
 
 /**
  * File Browser
+ *
+ * @template G of Group
+ * @template I of Image
  */
 class Browser
 {
+    /**
+     * @param class-string<G> $groupClass
+     * @param class-string<I> $imageClass
+     */
     public function __construct(
         private PropertyAccessor $propertyAccessor,
-        private string $path
+        private Properties $properties,
+        private string $path,
+        private string $groupClass = Group::class,
+        private string $imageClass = Image::class,
     ) {
     }
 
     /**
      * List all directories
      *
-     * @return Group[]
+     * @return G[]
      */
     public function list(
         mixed $sortBy = null,
         mixed $sortContentBy = null,
         mixed $filterBy = null,
-        mixed $filterContentBy = null
+        mixed $filterContentBy = null,
+        ?callable $loadProps = null,
     ): array {
         $groups = [];
         $finder = new Finder();
-        $finder->in($this->path)->directories()->sortByModifiedTime();
+        $finder->in($this->path)->directories();
 
         foreach ($finder as $directory) {
-            $groups[] = $this->readDirectory($directory, $sortContentBy, $filterContentBy);
+            $groups[] = $this->loadDirectory($directory, $sortContentBy, $filterContentBy, $loadProps);
         }
 
         if (($sorter = $this->getSortFunction($sortBy)) !== null) {
@@ -55,77 +67,120 @@ class Browser
 
     /**
      * Read a single directory
+     *
+     * @return ?G
      */
     public function read(
         string $path,
         mixed $sortBy = null,
-        mixed $filterBy = null
+        mixed $filterBy = null,
+        ?callable $loadProps = null,
     ): ?Group {
         $finder = new Finder();
-        $directories = iterator_to_array($finder->in($this->path)->name($path)->directories(), false);
+        $finder->in($this->path)->name($path)->directories();
+        $directories = iterator_to_array($finder, false);
 
         if (\count($directories) === 0) {
             return null;
         }
 
-        return $this->readDirectory($directories[0], $sortBy, $filterBy);
+        return $this->loadDirectory(reset($directories), $sortBy, $filterBy, $loadProps);
     }
 
-    private function readDirectory(
+    /**
+     * Load a directory
+     *
+     * @return G
+     */
+    private function loadDirectory(
         SplFileInfo $directory,
         mixed $sortBy = null,
-        mixed $filterBy = null
+        mixed $filterBy = null,
+        ?callable $loadProps = null,
     ): Group {
         $finder = new Finder();
-        $finder->in($directory->getPathname())->files();
-
-        $images = [];
-        $videos = [];
-        $config = [];
-        $archive = null;
+        $finder->in($directory->getPathname())->files()->sortByName();
+        /** @var G */
+        $group = new ($this->groupClass)($directory->getBasename());
 
         foreach ($finder as $file) {
-            $extention = $file->getExtension();
+            $extention = strtolower($file->getExtension());
 
-            if (preg_match('#jpg|jpeg|png|gif|webp#i', $extention) === 1) {
-                $images[] = $this->readImage($file, $directory);
+            if (preg_match('#jpe?g|png|gif|webp#i', $extention) === 1) {
+                $loadMeta = $loadProps === null || $loadProps($group, $file);
+                $group->addImage($this->readImage($group, $file, $directory, $extention, $loadMeta));
             }
 
             if (preg_match('#webm|mp4|m4a|m4p|m4b|m4r|m4v|ogg|oga|ogv|ogx|spx|opus#i', $extention) === 1) {
-                $videos[] = $this->readVideo($file, $directory);
+                $group->addVideo($this->readVideo($group, $file, $directory));
             }
 
             if (preg_match('#zip#i', $extention) === 1) {
-                $archive = $this->readArchive($file, $directory);
+                $group->setArchive($this->readArchive($group, $file, $directory));
             }
 
             if (preg_match('#json#i', $extention) === 1) {
-                $config = json_decode($file->getContents(), true);
-
-                if (!\is_array($config)) {
-                    throw new \Exception('Config file ' . $file->getPathname() . ' content must be an array, "' . \gettype($config) . '" given.');
-                }
+                $group->setConfig($this->loadConfig($file));
             }
         }
 
         if (($sorter = $this->getSortFunction($sortBy)) !== null) {
-            usort($images, $sorter);
+            $group->sortImages($sorter);
         }
 
-        if (($filter = $this->getFilterFunction($filterBy)) !== null) {
-            $images = array_values(array_filter($images, $filter));
-        }
-
-        return new Group(
-            $directory->getBasename(),
-            $images,
-            $videos,
-            $archive,
-            $config
-        );
+        return $group;
     }
 
-    public function readImage(SplFileInfo $file, SplFileInfo $directory): Image
+    /**
+     * @return array<string,string>
+     */
+    private function loadConfig(SplFileInfo $file): array
+    {
+        $config = json_decode($file->getContents(), true);
+
+        if (!\is_array($config)) {
+            throw new \Exception('Config file ' . $file->getPathname() . ' content must be an array, "' . \gettype($config) . '" given.');
+        }
+
+        return $config;
+    }
+
+    /**
+     * [readImage description]
+     *
+     * @param G $group
+     *
+     * @return I
+     */
+    private function readImage(Group $group, SplFileInfo $file, SplFileInfo $directory, string $extention, bool $loadMeta = true): Image
+    {
+        $exif = [];
+        $props = [];
+
+        if ($loadMeta && $extention === 'jpg' || $extention === 'jpeg') {
+            $exif = $this->getExif($file);
+        }
+
+        if ($loadMeta && $extention === 'png') {
+            $props = $this->properties->all($file->getPathname());
+        }
+
+        /** @var I */
+        $image = new ($this->imageClass)(
+            $group,
+            $file->getBasename(),
+            $this->getDate($file, $exif, $props),
+            $exif,
+            $props,
+        );
+
+        return $image;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function getExif(SplFileInfo $file): array
     {
         try {
             $exif = @exif_read_data($file->getPathname());
@@ -133,28 +188,44 @@ class Browser
             $exif = false;
         }
 
-        return new Image(
-            $file->getBasename(),
-            sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
-            isset($exif['DateTime']) ? new \DateTimeImmutable($exif['DateTime']) : (new \DateTimeImmutable())->setTimestamp($file->getMTime()),
-            $exif !== false ? $exif : [],
-        );
+        if ($exif === false) {
+            return [];
+        }
+
+        return $exif;
     }
 
-    public function readVideo(SplFileInfo $file, SplFileInfo $directory): Video
+    /**
+     * @param array<string,mixed>  $exif
+     * @param array<string,string> $props
+     */
+    private function getDate(SplFileInfo $file, array $exif, array $props): \DateTimeImmutable
+    {
+        if (isset($props['date:create'])) {
+            return new \DateTimeImmutable($props['date:create']);
+        }
+
+        if (isset($exif['DateTime'])) {
+            return new \DateTimeImmutable($exif['DateTime']);
+        }
+
+        return (new \DateTimeImmutable())->setTimestamp($file->getMTime());
+    }
+
+    private function readVideo(Group $group, SplFileInfo $file, SplFileInfo $directory): Video
     {
         return new Video(
+            $group,
             $file->getBasename(),
-            sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
             (new \DateTimeImmutable())->setTimestamp($file->getMTime()),
         );
     }
 
-    public function readArchive(SplFileInfo $file, SplFileInfo $directory): Archive
+    private function readArchive(Group $group, SplFileInfo $file, SplFileInfo $directory): Archive
     {
         return new Archive(
+            $group,
             $file->getBasename(),
-            sprintf('%s/%s', $directory->getBasename(), $file->getBasename()),
             (new \DateTimeImmutable())->setTimestamp($file->getMTime())
         );
     }

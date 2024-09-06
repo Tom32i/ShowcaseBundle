@@ -10,6 +10,8 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Tom32i\ShowcaseBundle\Model\Group;
+use Tom32i\ShowcaseBundle\Model\Image;
 use Tom32i\ShowcaseBundle\Service\Browser;
 use Tom32i\ShowcaseBundle\Service\PresetManager;
 use Tom32i\ShowcaseBundle\Service\Processor;
@@ -24,10 +26,13 @@ class GenerateCacheCommand extends Command
 {
     use Behaviour\CommandHelper;
 
+    /**
+     * @param Browser<Group, Image> $browser
+     */
     public function __construct(
         private Browser $browser,
         private Processor $processor,
-        private PresetManager $presetManager
+        private PresetManager $presetManager,
     ) {
         parent::__construct();
     }
@@ -49,18 +54,25 @@ class GenerateCacheCommand extends Command
         $slug = $this->parseString($input->getArgument('slug'));
         $preset = $this->parseString($input->getArgument('preset'));
         $presets = $preset !== null ? [$preset] : array_keys($this->presetManager->getAll());
-        $groups = $this->browser->list(null, null, $this->filterBySlug($slug));
+
+        if ($slug !== null) {
+            $groups = array_filter([$this->browser->read($slug)]);
+        } else {
+            $groups = $this->browser->list();
+        }
 
         if (\count($groups) === 0) {
             if ($slug !== null) {
-                $io->info(sprintf('No directory found for slug "%s".', $slug));
+                $io->info(\sprintf('No directory found for slug "%s".', $slug));
             } else {
                 $io->info('No directory found.');
             }
+
+            return Command::INVALID;
         }
 
         foreach ($groups as $group) {
-            $io->comment(sprintf(
+            $io->comment(\sprintf(
                 'Generating missing cache images in "%s" for presets: %s.',
                 $group->getSlug(),
                 implode(', ', $presets)

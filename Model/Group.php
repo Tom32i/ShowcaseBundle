@@ -13,11 +13,11 @@ class Group implements \ArrayAccess
      * @param array<string, mixed> $config
      */
     public function __construct(
-        private string $slug,
-        private array $images,
-        private array $videos,
-        private ?Archive $archive,
-        private array $config,
+        protected string $slug,
+        protected array $images = [],
+        protected array $videos = [],
+        protected ?Archive $archive = null,
+        protected array $config = [],
     ) {
     }
 
@@ -34,6 +34,27 @@ class Group implements \ArrayAccess
         return $this->images;
     }
 
+    public function getImage(int $index): ?Image
+    {
+        return $this->images[$index] ?? null;
+    }
+
+    public function getImageBySlug(string $slug): ?Image
+    {
+        foreach ($this->images as $image) {
+            if ($image->getSlug() === $slug) {
+                return $image;
+            }
+        }
+
+        return null;
+    }
+
+    public function addImage(Image $image): void
+    {
+        $this->images[] = $image;
+    }
+
     /**
      * @return Video[]
      */
@@ -42,9 +63,19 @@ class Group implements \ArrayAccess
         return $this->videos;
     }
 
+    public function addVideo(Video $video): void
+    {
+        $this->videos[] = $video;
+    }
+
     public function getArchive(): ?Archive
     {
         return $this->archive;
+    }
+
+    public function setArchive(Archive $archive): void
+    {
+        $this->archive = $archive;
     }
 
     /**
@@ -53,6 +84,19 @@ class Group implements \ArrayAccess
     public function getConfig(): array
     {
         return $this->config;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    public function setConfig(array $config): void
+    {
+        $this->config = $config;
+    }
+
+    public function sortImages(callable $sorter): void
+    {
+        usort($this->images, $sorter);
     }
 
     public function offsetExists(mixed $offset): bool
@@ -73,7 +117,7 @@ class Group implements \ArrayAccess
             'images' => $this->images,
             'videos' => $this->videos,
             'archive' => $this->archive,
-            default => $this->config[$offset] ?? null
+            default => $this->config[$offset] ?? null,
         };
     }
 

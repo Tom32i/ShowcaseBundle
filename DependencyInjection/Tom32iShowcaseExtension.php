@@ -8,6 +8,9 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Tom32i\ShowcaseBundle\Behavior\Properties;
+use Tom32i\ShowcaseBundle\Service\CachedPropertyManager;
+use Tom32i\ShowcaseBundle\Service\NullPropertyManager;
 
 class Tom32iShowcaseExtension extends Extension
 {
@@ -26,5 +29,18 @@ class Tom32iShowcaseExtension extends Extension
         $container->setParameter('tom32i_showcase.path', $config['path']);
         $container->setParameter('tom32i_showcase.cache', $config['cache']);
         $container->setParameter('tom32i_showcase.presets', $config['presets']);
+        $container->setParameter('tom32i_showcase.group_class', $config['group_class']);
+        $container->setParameter('tom32i_showcase.image_class', $config['image_class']);
+
+        $container->setAlias(Properties::class, $this->getPropertyManager());
+    }
+
+    public function getPropertyManager(): string
+    {
+        if (\extension_loaded('imagick')) {
+            return CachedPropertyManager::class;
+        }
+
+        return NullPropertyManager::class;
     }
 }

@@ -8,10 +8,15 @@ namespace Tom32i\ShowcaseBundle\Model;
 abstract class File implements \ArrayAccess
 {
     public function __construct(
+        protected Group $group,
         protected string $slug,
-        protected string $path,
         protected \DateTimeImmutable $date,
     ) {
+    }
+
+    public function getGroup(): Group
+    {
+        return $this->group;
     }
 
     public function getSlug(): string
@@ -19,9 +24,19 @@ abstract class File implements \ArrayAccess
         return $this->slug;
     }
 
+    public function setSlug(string $slug): void
+    {
+        $this->slug = $slug;
+    }
+
     public function getPath(): string
     {
-        return $this->path;
+        return \sprintf('%s/%s', $this->group->getSlug(), $this->slug);
+    }
+
+    public function getExtension(): string
+    {
+        return pathinfo($this->slug, PATHINFO_EXTENSION);
     }
 
     public function getDate(): \DateTimeImmutable
@@ -43,7 +58,7 @@ abstract class File implements \ArrayAccess
     {
         return match ($offset) {
             'slug' => $this->slug,
-            'path' => $this->path,
+            'path' => $this->getPath(),
             'date' => $this->date,
             default => null,
         };

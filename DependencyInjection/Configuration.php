@@ -6,6 +6,8 @@ namespace Tom32i\ShowcaseBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
+use Tom32i\ShowcaseBundle\Model\Group;
+use Tom32i\ShowcaseBundle\Model\Image;
 
 class Configuration implements ConfigurationInterface
 {
@@ -20,6 +22,28 @@ class Configuration implements ConfigurationInterface
                 ->end()
                 ->scalarNode('cache')
                     ->defaultValue('%kernel.project_dir%/var/cache/showcase')
+                ->end()
+                ->scalarNode('group_class')
+                    ->defaultValue(Group::class)
+                    ->validate()
+                        ->ifTrue(fn (string $value) => !class_exists($value))
+                        ->thenInvalid('Group class not found')
+                    ->end()
+                    ->validate()
+                        ->ifTrue(fn (string $value) => !is_a($value, Group::class, true))
+                        ->thenInvalid('Not a valid Group class')
+                    ->end()
+                ->end()
+                ->scalarNode('image_class')
+                    ->defaultValue(Image::class)
+                    ->validate()
+                        ->ifTrue(fn (string $value) => !class_exists($value))
+                        ->thenInvalid('Image class not found')
+                    ->end()
+                    ->validate()
+                        ->ifTrue(fn (string $value) => !is_a($value, Image::class, true))
+                        ->thenInvalid('Not a valid Image class')
+                    ->end()
                 ->end()
                 ->arrayNode('presets')
                     ->useAttributeAsKey('name')

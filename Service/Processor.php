@@ -29,21 +29,20 @@ class Processor
     }
 
     /**
-     * Serve an file
+     * Serve a file
      */
     public function serveFile(string $filepath): BinaryFileResponse
     {
         return new BinaryFileResponse(
-            sprintf('%s/%s', $this->path, $filepath),
-            200,  // status
-            [
-                'expires' => '30d',
-                'max_age' => 30 * 24 * 60 * 60,
+            file: \sprintf('%s/%s', $this->path, $filepath),
+            status: 200,
+            headers: [
+                'expires' => '30d', // 30 days
+                'max_age' => 30 * 24 * 60 * 60, // 30 days
             ],
-            true, // public
-            null, // contentDisposition
-            true, // autoEtag
-            true  // autoLastModified
+            public: true,
+            autoEtag: true,
+            autoLastModified: true,
         );
     }
 
@@ -65,32 +64,13 @@ class Processor
 
     private function getFilePath(string $filepath): string
     {
-        $data = pathinfo($filepath);
+        $directory = pathinfo($filepath, PATHINFO_DIRNAME);
+        $filename = pathinfo($filepath, PATHINFO_FILENAME);
 
-        if (!\array_key_exists('dirname', $data)) {
-            throw new \Exception("Could not resolve directory name on \"$this->path\".");
-        }
-
-        if (!\array_key_exists('extension', $data)) {
-            throw new \Exception("Could not resolve file extension on \"$this->path\".");
-        }
-
-        $finder = (new Finder())
-            ->in(sprintf('%s/%s', $this->path, $data['dirname']))
-            ->files()
-            ->name($data['filename'] . '.*');
+        $finder = (new Finder())->in(\sprintf('%s/%s', $this->path, $directory))->files()->name($filename . '.*');
 
         foreach ($finder as $file) {
-            if ($data['extension'] !== $file->getExtension()) {
-                /* @phpstan-ignore-next-line */
-                return preg_replace(
-                    sprintf('#%s$#', $data['extension']),
-                    $file->getExtension(),
-                    $filepath
-                );
-            }
-
-            return $filepath;
+            return \sprintf('%s/%s.%s', $directory, $filename, $file->getExtension());
         }
 
         throw new \Exception('File not found.');

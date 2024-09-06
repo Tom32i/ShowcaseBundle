@@ -13,7 +13,7 @@ use Tom32i\ShowcaseBundle\Service\Processor;
 class MediaController
 {
     public function __construct(
-        private Processor $processor
+        private Processor $processor,
     ) {
     }
 
