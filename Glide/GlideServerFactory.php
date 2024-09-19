@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace Tom32i\ShowcaseBundle\Glide;
 
-use League\Glide\Responses\SymfonyResponseFactory;
 use League\Glide\Server;
 use League\Glide\ServerFactory;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Tom32i\ShowcaseBundle\Service\PresetManager;
 
 class GlideServerFactory
 {
     public function __construct(
+        private RequestStack $requestStack,
         private PresetManager $presetManager,
         private string $path,
-        private string $cache
+        private string $cache,
     ) {
     }
 
@@ -24,7 +25,9 @@ class GlideServerFactory
             'source' => $this->path,
             'cache' => $this->cache,
             'presets' => $this->presetManager->getConfig(),
-            'response' => new SymfonyResponseFactory(),
+            'response' => new ResponseFactory(
+                $this->requestStack->getCurrentRequest()
+            ),
         ]);
     }
 }

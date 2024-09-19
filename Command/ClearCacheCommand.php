@@ -10,6 +10,8 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Tom32i\ShowcaseBundle\Model\Group;
+use Tom32i\ShowcaseBundle\Model\Image;
 use Tom32i\ShowcaseBundle\Service\Browser;
 use Tom32i\ShowcaseBundle\Service\Processor;
 
@@ -23,9 +25,12 @@ class ClearCacheCommand extends Command
 {
     use Behaviour\CommandHelper;
 
+    /**
+     * @param Browser<Group, Image> $browser
+     */
     public function __construct(
         private Browser $browser,
-        private Processor $processor
+        private Processor $processor,
     ) {
         parent::__construct();
     }
@@ -43,18 +48,25 @@ class ClearCacheCommand extends Command
 
         $io->title('Clear cached images');
         $slug = $this->parseString($input->getArgument('slug'));
-        $groups = $this->browser->list(null, null, $this->filterBySlug($slug));
+
+        if ($slug !== null) {
+            $groups = array_filter([$this->browser->read($slug)]);
+        } else {
+            $groups = $this->browser->list();
+        }
 
         if (\count($groups) === 0) {
             if ($slug !== null) {
-                $io->info(sprintf('No directory found for slug "%s".', $slug));
+                $io->info(\sprintf('No directory found for slug "%s".', $slug));
             } else {
                 $io->info('No directory found.');
             }
+
+            return Command::INVALID;
         }
 
         foreach ($groups as $group) {
-            $io->comment(sprintf(
+            $io->comment(\sprintf(
                 'Clearing all cached images in "%s"...',
                 $group->getSlug()
             ));

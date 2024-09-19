@@ -6,6 +6,7 @@
 
     <services>
         <service id="Tom32i\ShowcaseBundle\Glide\GlideServerFactory">
+            <argument type="service" id="Symfony\Component\HttpFoundation\RequestStack"/>
             <argument type="service" id="Tom32i\ShowcaseBundle\Service\PresetManager"/>
             <argument>%tom32i_showcase.path%</argument>
             <argument>%tom32i_showcase.cache%</argument>
@@ -21,7 +22,10 @@
 
         <service id="Tom32i\ShowcaseBundle\Service\Browser">
             <argument type="service" id="Symfony\Component\PropertyAccess\PropertyAccessor"/>
+            <argument type="service" id="Tom32i\ShowcaseBundle\Behavior\Properties"/>
             <argument>%tom32i_showcase.path%</argument>
+            <argument>%tom32i_showcase.group_class%</argument>
+            <argument>%tom32i_showcase.image_class%</argument>
         </service>
 
         <service id="Tom32i\ShowcaseBundle\Service\Processor">
@@ -31,6 +35,31 @@
 
         <service id="Tom32i\ShowcaseBundle\Service\PresetManager">
             <argument>%tom32i_showcase.presets%</argument>
+        </service>
+
+        <service id="Tom32i\ShowcaseBundle\Service\Normalizer">
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\Processor"/>
+            <argument>%tom32i_showcase.path%</argument>
+        </service>
+
+        <service id="imagick_cache" class="Symfony\Component\Cache\Adapter\FilesystemAdapter">
+            <argument key="$namespace">showcase-imagick</argument>
+            <argument key="$defaultLifetime">0</argument>
+        </service>
+
+        <service
+            id="Tom32i\ShowcaseBundle\Service\CachedPropertyManager"
+            decorates="Tom32i\ShowcaseBundle\Service\PropertyManager"
+            decoration-inner-name="Tom32i\ShowcaseBundle\Service\CachedPropertyManager.inner"
+        >
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\CachedPropertyManager.inner"/>
+            <argument type="service" id="imagick_cache"/>
+        </service>
+
+        <service id="Tom32i\ShowcaseBundle\Service\PropertyManager">
+        </service>
+
+        <service id="Tom32i\ShowcaseBundle\Service\NullPropertyManager">
         </service>
 
         <service id="Tom32i\ShowcaseBundle\Controller\MediaController">
@@ -59,9 +88,19 @@
 
         <service id="Tom32i\ShowcaseBundle\Command\NormalizeNamesCommand">
             <argument type="service" id="Tom32i\ShowcaseBundle\Service\Browser"/>
-            <argument type="service" id="Tom32i\ShowcaseBundle\Service\Processor"/>
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\Normalizer"/>
             <argument>%tom32i_showcase.path%</argument>
             <tag name="console.command"/>
+        </service>
+
+        <service id="Tom32i\ShowcaseBundle\ValueResolver\GroupValueResolver">
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\Browser"/>
+            <tag name="showcase_group" priority="120">controller.argument_value_resolver</tag>
+        </service>
+
+        <service id="Tom32i\ShowcaseBundle\ValueResolver\ImageValueResolver">
+            <argument type="service" id="Tom32i\ShowcaseBundle\Service\Browser"/>
+            <tag name="showcase_image" priority="110">controller.argument_value_resolver</tag>
         </service>
     </services>
 </container>

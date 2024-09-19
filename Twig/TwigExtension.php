@@ -13,7 +13,7 @@ class TwigExtension extends AbstractExtension
 {
     public function __construct(
         private UrlGeneratorInterface $urlGenerator,
-        private PresetManager $presetManager
+        private PresetManager $presetManager,
     ) {
     }
 
@@ -41,7 +41,7 @@ class TwigExtension extends AbstractExtension
 
         return $this->urlGenerator->generate('image', [
             'preset' => $preset->getName(),
-            'path' => sprintf('%s/%s.%s', $data['dirname'], $data['filename'], $preset->getFormat() ?? $data['extension']),
+            'path' => \sprintf('%s/%s.%s', $data['dirname'], $data['filename'], $preset->getFormat() ?? $data['extension']),
         ]);
     }
 
