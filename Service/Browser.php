@@ -111,7 +111,7 @@ class Browser
                 $group->addImage($this->readImage($group, $file, $directory, $extention, $loadMeta));
             }
 
-            if (preg_match('#webm|mp4|m4a|m4p|m4b|m4r|m4v|ogg|oga|ogv|ogx|spx|opus#i', $extention) === 1) {
+            if (preg_match('#webm|mp4|m4a|m4p|m4b|m4r|m4v|ogg|oga|ogv|ogx|spx|opus|mov#i', $extention) === 1) {
                 $group->addVideo($this->readVideo($group, $file, $directory));
             }
 
