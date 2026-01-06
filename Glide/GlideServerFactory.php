@@ -16,6 +16,7 @@ class GlideServerFactory
         private PresetManager $presetManager,
         private string $path,
         private string $cache,
+        private string $driver,
     ) {
     }
 
@@ -28,6 +29,7 @@ class GlideServerFactory
             'response' => new ResponseFactory(
                 $this->requestStack->getCurrentRequest()
             ),
+            'driver' => $this->driver,
         ]);
     }
 }
