@@ -28,6 +28,7 @@ class Tom32iShowcaseExtension extends Extension
         // Register config as parameters
         $container->setParameter('tom32i_showcase.path', $config['path']);
         $container->setParameter('tom32i_showcase.cache', $config['cache']);
+        $container->setParameter('tom32i_showcase.driver', $config['driver']);
         $container->setParameter('tom32i_showcase.presets', $config['presets']);
         $container->setParameter('tom32i_showcase.group_class', $config['group_class']);
         $container->setParameter('tom32i_showcase.image_class', $config['image_class']);

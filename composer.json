@@ -18,8 +18,8 @@
     },
     "require": {
         "php": "^8.3",
-        "league/glide": "^2.2",
-        "league/glide-symfony": "^2.0",
+        "league/glide": "^3.0",
+        "league/glide-symfony": "^2.1",
         "symfony/finder": "^6.4|^7.0|^8.0",
         "symfony/filesystem": "^6.4|^7.0|^8.0",
         "symfony/http-foundation": "^6.4|^7.0|^8.0",
