@@ -7,7 +7,7 @@ namespace Tom32i\ShowcaseBundle\DependencyInjection;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
-use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Tom32i\ShowcaseBundle\Behavior\Properties;
 use Tom32i\ShowcaseBundle\Service\CachedPropertyManager;
 use Tom32i\ShowcaseBundle\Service\NullPropertyManager;
@@ -19,8 +19,8 @@ class Tom32iShowcaseExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
-        $loader->load('services.xml');
+        $loader = new PhpFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
+        $loader->load('services.php');
 
         $path = preg_replace('#^(.*)/?#', '$1', $config['path']);
         $cache = preg_replace('#^(.*)/?#', '$1', $config['cache']);
