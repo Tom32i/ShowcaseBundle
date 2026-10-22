@@ -35,6 +35,7 @@ return static function (ContainerConfigurator $container): void {
                 service(PresetManager::class),
                 param('tom32i_showcase.path'),
                 param('tom32i_showcase.cache'),
+                param('tom32i_showcase.driver'),
             ])
 
         ->set('configured_glide_server', Server::class)

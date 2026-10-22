@@ -18,7 +18,7 @@ use Tom32i\ShowcaseBundle\Service\Processor;
 
 #[AsCommand(
     name: 'showcase:cache-generate',
-    description: 'Delete and regenerate the cached thumbnails for images.',
+    description: 'Generate missing cached thumbnails for images.',
     hidden: false,
     aliases: ['showcase:cg']
 )]
