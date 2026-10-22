@@ -9,3 +9,7 @@ parameters:
 
     bootstrapFiles:
         - vendor/autoload.php
+
+    strictRules:
+        # Loose comparisons are intended (e.g. comparing DateTime values when sorting)
+        disallowedLooseComparison: false
