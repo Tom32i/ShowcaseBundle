@@ -7,7 +7,7 @@ namespace Tom32i\ShowcaseBundle\Controller;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Tom32i\ShowcaseBundle\Service\Processor;
 
 class MediaController
